@@ -1,0 +1,5 @@
+.vscode
+objs
+ft_irc
+*.out
+*.swp
