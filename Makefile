@@ -1,21 +1,18 @@
-NAME	=	ircserv
-FLAGS	=	-std=c++98 -Wall -Wextra -Werror
-INCLUDE =	-I./inc
-DIR_OBJS	=	objs/
-
+NAME	 =	ircserv
+FLAGS	 =	-std=c++98 -Wall -Wextra -Werror
+INCLUDE  =	-Iinc/
+DIR_OBJS =	objs/
 DIR_SRC = src/
 
 # *******************************	FILES	******************************* #
 
-FILES		=	main.cpp
-
+FILES		=	main.cpp Server.cpp Client.cpp
 FILES_SRC	=	$(addprefix $(DIR_SRC),$(FILES))
 
 # *******************************  OBJECTS	******************************* #
 
-OBJS	=	$(addprefix $(DIR_OBJS),$(FILES_SRC:.cpp=.o))
-
-DEPS	=	$(OBJS:.o=.d)
+OBJS	=	$(FILES_SRC:%.cpp=$(DIR_OBJS)%.o) #$(addprefix $(DIR_OBJS),$(FILES_SRC:.cpp=.o))
+DEPS	=	$(OBJS:%.o=%.d) #$(OBJS:.o=.d)
 
 # *******************************  COLORS	******************************* #
 
@@ -38,12 +35,12 @@ $(DIR_OBJS):
 	@mkdir -p $(DIR_OBJS)
 
 $(NAME): $(OBJS)
-	c++ $(FLAGS) $(OBJS) -o $(NAME)
+	c++ $(FLAGS) $(INCLUDE) $(OBJS) -o $(NAME)
 	@echo "${BLUE_BOLD}Internet Relay Chat ${GREEN}compiled ✅\n${RESET}"
 
 $(DIR_OBJS)%.o: %.cpp Makefile
 	@mkdir -p $(dir $@)
-	c++ $(FLAGS) -c $< -o $@
+	c++ $(FLAGS)  $(INCLUDE) -MMD -c $< -o $@
 	@echo "${YELLOW}Compiling ${RESET}$@...${RESET}"
 
 clean:
