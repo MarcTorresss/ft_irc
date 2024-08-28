@@ -1,24 +1,24 @@
 #include "Client.hpp"
 
 Client::Client(){
-	Fd = -1;
-	IPadd = "";
+	_fd = -1;
+	_ipAdd = "";
 }
 
-Client::Client(int fd, std::string ipadd): Fd(fd), IPadd(ipadd){
+Client::Client(int fd, std::string ipadd): _fd(fd), _ipAdd(ipadd){
 }
 
 Client::~Client(){
 }
 
-int Client::GetFd(){
-	return Fd;
+int Client::getFd(){
+	return _fd;
 }
 
-void Client::SetFd(int fd){
-	Fd = fd;
+void Client::setFd(int fd){
+	_fd = fd;
 }
 
 void Client::setIpAdd(std::string ipadd){
-	IPadd = ipadd;
+	_ipAdd = ipadd;
 }

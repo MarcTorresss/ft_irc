@@ -6,16 +6,16 @@
 class Client
 {
 private:
-	int Fd;
-	std::string IPadd; //-> client ip address
+	int _fd;
+	std::string _ipAdd; //-> client ip address
 public:
 	Client();
-	Client(int fd, std::string ipadd);
+	Client(int fd, std::string ipAdd);
 	~Client();
 
-	int GetFd();
-	void SetFd(int fd);
-	void setIpAdd(std::string ipadd);
+	int getFd();
+	void setFd(int fd);
+	void setIpAdd(std::string ipaAdd);
 };
 
 #endif
