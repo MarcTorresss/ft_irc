@@ -1,13 +1,9 @@
 #include "Server.hpp"
 
-Server::Server(){
-	_serSocketFd = -1;
-	_port = 4444;
+Server::Server(): _serSocketFd(-1), _port(4444){
 }
 
-Server::Server(int port){
-	_serSocketFd = -1;
-	_port = port;
+Server::Server(int port): _serSocketFd(-1), _port(port){
 }
 
 Server::~Server(){
@@ -25,7 +21,6 @@ void Server::serSocket(){
 	add.sin_port = htons(_port);
 	add.sin_addr.s_addr = INADDR_ANY;
 }
-
 
 void Server::clearClients(int fd){
 	for(size_t i = 0; i < _fds.size(); i++){ //-> remove the client from the pollfd

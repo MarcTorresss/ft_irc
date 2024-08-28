@@ -1,8 +1,6 @@
 #include "Client.hpp"
 
-Client::Client(){
-	_fd = -1;
-	_ipAdd = "";
+Client::Client(): _fd(-1), _ipAdd(""){
 }
 
 Client::Client(int fd, std::string ipadd): _fd(fd), _ipAdd(ipadd){

@@ -7,8 +7,8 @@ class Client;
 class Server
 {
 private:
-	int _port;
 	int _serSocketFd;
+	int _port;
 	static bool _signal;
 	std::vector<Client> _clients;
 	std::vector<struct pollfd> _fds; //-> vector of pollfd
