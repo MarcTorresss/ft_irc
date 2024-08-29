@@ -14,6 +14,11 @@ Server::~Server(){
 
 void Server::serverInit(){
 	serSocket();
+
+	struct pollfd serPoll;
+	serPoll.fd = _serSocketFd; //el port d'escolta del serversocket
+	serPoll.events = POLLIN; //pendent de input events
+	_fds.push_back(serPoll); //afagir el pollfd al vector
 }
 
 void Server::signalHandler(int signum){
@@ -22,14 +27,27 @@ void Server::signalHandler(int signum){
 }
 
 void Server::serSocket(){
-	struct sockaddr_in add;
+	struct sockaddr_in sockAddr;
 	// struct pollfd poll_a; //;)
 
-	add.sin_family = AF_INET;
-	add.sin_port = htons(_port);
-	add.sin_addr.s_addr = INADDR_ANY;
+	sockAddr.sin_family = AF_INET;
+	sockAddr.sin_port = htons(_port);
+	sockAddr.sin_addr.s_addr = INADDR_ANY;
+	std::memset(sockAddr.sin_zero, 0, sizeof(sockAddr.sin_zero));
 }
 
+void Server::acceptNewClient(){
+	Client client;
+	struct sockaddr_in cliAddr;
+	socklen_t len = sizeof(cliAddr);
+	struct pollfd cliPoll;
+	int cliSocket = accept(_serSocketFd, (struct sockaddr *)&(cliAddr), &len);
+	if (cliSocket < 0) {
+		std::cout << "unable to accept new client" << std::endl;
+		return;
+	}
+	
+}
 void Server::clearClients(int fd){
 	for(size_t i = 0; i < _fds.size(); i++){ //-> remove the client from the pollfd
 		if (_fds[i].fd == fd)
