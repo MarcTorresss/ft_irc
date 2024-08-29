@@ -1,5 +1,7 @@
 #include "Server.hpp"
 
+bool Server::_signal = false;
+
 Server::Server(): _serSocketFd(-1), _port(4444){
 }
 
@@ -11,8 +13,8 @@ Server::~Server(){
 }
 
 void Server::serverInit(){
-
 }
+
 void Server::serSocket(){
 	struct sockaddr_in add;
 	// struct pollfd poll_a; //;)
