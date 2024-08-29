@@ -13,6 +13,12 @@ Server::~Server(){
 }
 
 void Server::serverInit(){
+	serSocket();
+}
+
+void Server::signalHandler(int signum){
+	(void)signum;
+	Server::_signal = true;
 }
 
 void Server::serSocket(){

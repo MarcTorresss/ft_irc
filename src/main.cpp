@@ -24,6 +24,10 @@ int check_arguments(int argc, char **argv){
 		std::cerr << ERR <<"Port number too big (max is 65535)" << WHI<< std::endl;
 		return -1;
 	}
+	if (portnum < 1024){
+		std::cerr << ERR <<"Port number is reserved: use within 1024-65535 range" << WHI<< std::endl;
+		return -1;
+	}
 	std::string password(argv[2]);
 	if (password.length() > 30){ //numero arbitrario cambiable 
 		std::cerr << ERR <<"Password is too long (max 30 chars)" << WHI<< std::endl;
