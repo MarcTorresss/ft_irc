@@ -2,6 +2,9 @@
 # define SERVER_HPP_
 
 #include "ircserv.hpp"
+
+# define BUFF_SIZE 1024
+
 class Client;
 
 class Server
@@ -11,7 +14,7 @@ private:
 	int _port;
 	static bool _signal;
 	std::vector<Client> _clients;
-	std::vector<struct pollfd> _fds; //-> vector of pollfd
+	std::vector<struct pollfd> _fds;
 public:
 	Server();
 	Server(int port);
@@ -20,7 +23,7 @@ public:
 	void serverInit();
 	void serSocket();
 	void acceptNewClient();
-	void receiveNewData(int fd); //-> receive new data from a registered client
+	void receiveNewData(int fd);
 
 	static void signalHandler(int signum);
 
