@@ -12,23 +12,44 @@ Server::~Server(){
 
 }
 
-void Server::serverInit(){
+void Server::serverInit()
+{
 	serSocket();
 
-	struct pollfd serPoll;
-	serPoll.fd = _serSocketFd; //el port d'escolta del serversocket
-	serPoll.events = POLLIN;  // poll() nos dira si hay datos para leer en fd o nuevas conexiones en un socket de servidor 
-	_fds.push_back(serPoll); //afagir el pollfd al vector
+	std::cout << GRE << "Server <" << _serSocketFd << "> Connected" << WHI << std::endl << "";
+	std::cout << "Server is ready, waiting for clients..." << std::endl;
+
+	while (!Server::_signal)
+	{
+		int pollResult = poll(&_fds[0],_fds.size(),-1);
+    	if (pollResult == -1 && !Server::_signal)
+		{
+        	throw std::runtime_error("Thee function poll() failed");
+		}
+		for (size_t i = 0; i < _fds.size(); i++)
+		{
+			if (_fds[i].revents & POLLIN)
+			{
+				if (_fds[i].fd == _serSocketFd)
+					acceptNewClient();
+				else
+					receiveNewData(_fds[i].fd);
+			}
+		}
+	}
+	//closeFds();
 }
 
-void Server::signalHandler(int signum){
+void Server::signalHandler(int signum)
+{
 	(void)signum;
 	Server::_signal = true;
 }
 
-void Server::serSocket(){
+void Server::serSocket()
+{
 	struct	sockaddr_in sockAddr;
-	struct	pollfd		Poll;
+	struct	pollfd		serPoll;
 	// struct pollfd poll_a; //;)
 
 	sockAddr.sin_family = AF_INET;
@@ -48,13 +69,18 @@ void Server::serSocket(){
 		throw(std::runtime_error("faild to bind socket"));
 	if (listen(_serSocketFd, SOMAXCONN) == -1) // vinculamos el fd y configuramos la cantidad maxima de solicitudes de conexion
 		throw(std::runtime_error("listen() faild"));
+
+	serPoll.fd = _serSocketFd; //el port d'escolta del serversocket
+	serPoll.events = POLLIN;  // poll() nos dira si hay datos para leer en fd o nuevas conexiones en un socket de servidor 
+	_fds.push_back(serPoll); //afagir el pollfd al vector
 }
 
-void Server::acceptNewClient(){
+void Server::acceptNewClient()
+{
 	Client client;
 	struct sockaddr_in cliAddr;
 	socklen_t len = sizeof(cliAddr);
-	struct pollfd cliPoll;
+	//struct pollfd cliPoll;
 	int cliSocket = accept(_serSocketFd, (struct sockaddr *)&(cliAddr), &len);
 	if (cliSocket < 0) {
 		std::cout << "unable to accept new client" << std::endl;
@@ -62,6 +88,33 @@ void Server::acceptNewClient(){
 	}
 	
 }
+
+void	Server::receiveNewData(int fd)
+{
+  	char buff[BUFF_SIZE];
+    memset(buff, 0, BUFF_SIZE);
+
+    ssize_t bytes = recv(fd, buff, BUFF_SIZE - 1, 0);
+
+    if (bytes < 0)
+	{
+        std::cerr << "Error en recv para el cliente <" << fd << ">" << std::endl;
+        clearClients(fd);
+        close(fd);
+    }
+    else if (bytes == 0)
+	{
+        std::cout << RED << "Cliente <" << fd << "> Desconectado" << WHI << std::endl;
+        clearClients(fd);
+        close(fd);
+    }
+    else 
+	{
+        buff[bytes] = '\0';
+        std::cout << YEL << "Cliente <" << fd << "> Datos: " << WHI << buff << std::endl;
+    }
+}
+
 void Server::clearClients(int fd){
 	for(size_t i = 0; i < _fds.size(); i++){ //-> remove the client from the pollfd
 		if (_fds[i].fd == fd)
