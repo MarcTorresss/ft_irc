@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <poll.h>
 #include <csignal>
+#include <cstring>
 #include <cstdlib>
 
 //-------------------------COLORS------------------------------//
