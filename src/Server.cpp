@@ -77,7 +77,7 @@ void Server::serSocket()
 
 void Server::acceptNewClient()
 {
-	Client client;
+	/*Client client;
 	struct sockaddr_in cliAddr;
 	socklen_t len = sizeof(cliAddr);
 	//struct pollfd cliPoll;
@@ -85,13 +85,102 @@ void Server::acceptNewClient()
 	if (cliSocket < 0) {
 		std::cout << "unable to accept new client" << std::endl;
 		return;
+	}*/
+	//Temporal es solo para que funcione falta lo de javi, arriba in processss
+	std::cout << GRE << "NEW CLIENT" << WHI << std::endl;
+	Client cli; //-> create a new client
+	struct sockaddr_in cliadd;
+	struct pollfd NewPoll;
+	socklen_t len = sizeof(cliadd);
+
+	int incofd = accept(_serSocketFd, (sockaddr *)&(cliadd), &len); //-> accept the new client
+	if (incofd == -1)
+		{std::cout << "accept() failed" << std::endl; return;}
+
+	if (fcntl(incofd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option (O_NONBLOCK) for non-blocking socket
+		{std::cout << "fcntl() failed" << std::endl; return;}
+
+	NewPoll.fd = incofd; //-> add the client socket to the pollfd
+	NewPoll.events = POLLIN; //-> set the event to POLLIN for reading data
+	NewPoll.revents = 0; //-> set the revents to 0
+
+	cli.setFd(incofd); //-> set the client file descriptor
+	cli.setIpAdd(inet_ntoa((cliadd.sin_addr))); //-> convert the ip address to string and set it
+	_clients.push_back(cli); //-> add the client to the vector of clients
+	_fds.push_back(NewPoll); //-> add the client socket to the pollfd
+
+	std::cout << GRE << "Client <" << incofd << "> Connected" << WHI << std::endl;
+}
+
+Client* Server::getClient(int fd) {
+    for (std::vector<Client>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+        if (it->getFd() == fd) {
+            return &(*it);
+        }
+    }
+    return NULL;
+}
+
+void	Server::check_comand( char *buff, Client *cli )
+{
+	std::string receivedData(buff);
+    std::istringstream iss(receivedData);
+    std::string command;
+    std::string params;
+
+    // Separar el comando de los parámetros
+    iss >> command;
+    std::getline(iss, params);
+
+    std::string commands[] = { "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PASS" };
+    int i = 0;
+    for (i = 0; i < 9; i++) {
+        if (commands[i] == command)
+            break;
+    }
+	(void) cli;
+    switch (i)
+    {
+        case 0: // NICK
+            //_setNickname(cli, params);
+			std::cout << "entro" << std::endl;
+            break;
+        case 1: // USER
+            //_setUser(cli, params);
+            break;
+        case 2: // JOIN
+            //_handleJoin(cli, params);
+            break;
+        case 3: // PRIVMSG
+            //_handlePrivmsg(cli, params);
+            break;
+        case 4: // KICK
+            //_handleKick(cli, params);
+            break;
+        case 5: // INVITE
+            //_handleInvite(cli, params);
+            break;
+        case 6: // TOPIC
+            //_handleTopic(cli, params);
+            break;
+        case 7: // MODE
+            //_handleMode(cli, params);
+            break;
+        case 8: // PASS
+            //_authenticatePassword(cli, params);
+            break;
+        default:
+            std::cout << "Comando no reconocido: " << command << std::endl;
+            break;
 	}
-	
 }
 
 void	Server::receiveNewData(int fd)
 {
+	std::cout << GRE << "DATA" << WHI << std::endl;
   	char buff[BUFF_SIZE];
+	Client	*cli = getClient(fd);
+
     memset(buff, 0, BUFF_SIZE);
 
     ssize_t bytes = recv(fd, buff, BUFF_SIZE - 1, 0);
@@ -112,6 +201,7 @@ void	Server::receiveNewData(int fd)
 	{
         buff[bytes] = '\0';
         std::cout << YEL << "Cliente <" << fd << "> Datos: " << WHI << buff << std::endl;
+		check_comand(buff, cli);
     }
 }
 
