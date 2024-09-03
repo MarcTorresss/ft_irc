@@ -2,6 +2,7 @@
 # define CLIENT_HPP_
 
 # include "ircserv.hpp"
+# include <errno.h>
 
 class Client
 {
@@ -11,28 +12,30 @@ private:
 	int _fd;
 	std::string			_ipAdd; //-> client ip address
 	struct sockaddr_in	_clientAdd; // direccion i puerto del cliente
-	std::string			_sendBuffer;
-	std::string			_receiveBuffer;
+	std::string			_sendInfo;
+	std::string			_receiveInfo;
 
 public:
 	Client();
 	Client(int fd, std::string ipAdd);
 	~Client();
 
-	std::string getUserName();
-    std::string getNickName();
-	int getFd();
-	std::string getIpAdd();
-    struct sockaddr_in getClientAdd();
-    std::string getSendBuffer();
-    std::string getReceiveBuffer();
-	void setFd( int fd );
-	void setIpAdd( std::string ipAdd);
-	void setUserName( std::string& userName );
-    void setNickName( std::string& nickName );
-    void setClientAdd( struct sockaddr_in& clientAdd );
-    void setSendBuffer( std::string& sendBuffer );
-    void setReceiveBuffer( std::string& receiveBuffer );
+	std::string getUserName( void );
+    std::string getNickName( void );
+	int getFd( void );
+	std::string getIpAdd( void );
+    struct sockaddr_in getClientAdd( void );
+    std::string getSendInfo( void );
+    std::string getReceiveInfo( void );
+	void	setFd( int fd );
+	void	setIpAdd( std::string ipAdd);
+	void	setUserName( std::string& userName );
+    void	setNickName( std::string& nickName );
+    void 	setClientAdd( struct sockaddr_in& clientAdd );
+	void	setSendInfo( std::string sendinfo );
+    void	setReceiveInfo( std::string reciveinfo );
+    int		sendInfo( void );
+	int		receiveInfo( void );
 };
 
 #endif

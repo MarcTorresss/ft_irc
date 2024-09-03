@@ -34,14 +34,14 @@ struct sockaddr_in Client::getClientAdd()
     return _clientAdd;
 }
 
-std::string Client::getSendBuffer()
+std::string Client::getSendInfo()
 {
-    return _sendBuffer;
+    return _sendInfo;
 }
 
-std::string Client::getReceiveBuffer()
+std::string Client::getReceiveInfo()
 {
-    return _receiveBuffer;
+    return _receiveInfo;
 }
 
 void Client::setUserName( std::string& userName )
@@ -69,12 +69,38 @@ void Client::setClientAdd( struct sockaddr_in& clientAdd )
     _clientAdd = clientAdd;
 }
 
-void Client::setSendBuffer( std::string& sendBuffer )
+void	Client::setSendInfo( std::string sendinfo )
 {
-    _sendBuffer = sendBuffer;
+	_sendInfo = sendinfo;
 }
 
-void Client::setReceiveBuffer( std::string& receiveBuffer )
+void	Client::setReceiveInfo( std::string reciveinfo )
 {
-    _receiveBuffer = receiveBuffer;
+	_receiveInfo = reciveinfo;
+}
+
+int	Client::sendInfo( void )
+{
+ 	int ret = send(_fd, NULL, 0, 0);
+    if (ret == -1)
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) // operacion de escritura bloqueada
+            return 0;
+        else
+            return (std::cerr << "Error en send: " << strerror(errno) << std::endl, 0);
+    }
+
+    int bytes = send(_fd, _sendInfo.c_str(), _sendInfo.length(), 0);
+    if (bytes == -1)
+    {
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
+            return (std::cerr << "Error en send: " << strerror(errno) << std::endl, 0);
+        return 0;
+    }
+    return 1; // El mensaje se ha enviado nishe
+}
+
+int	Client::receiveInfo( void )
+{
+	return 1;
 }
