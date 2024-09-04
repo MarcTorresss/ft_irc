@@ -102,5 +102,23 @@ int	Client::sendInfo( void )
 
 int	Client::receiveInfo( void )
 {
-	return 1;
+	char buff[BUFF_SIZE];
+    ssize_t bytes;
+    bool running = true;
+
+    while (running)
+    {
+        memset(buff, 0, sizeof(buff));
+        bytes = recv(_fd, buff, sizeof(buff) - 1, 0); // Rabem dades.
+        if (bytes <= 0)
+        {
+            if (errno == EWOULDBLOCK || errno == EAGAIN)
+                running = false;
+            else
+                return (std::cout << "Client <" << _fd << "> Disconnected" << std::endl, 0);
+        }
+        else
+            _receiveInfo += std::string(buff);
+    }
+    return 1;
 }
