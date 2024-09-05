@@ -214,5 +214,5 @@ void Server::clearClients(int fd){
 		if (_clients[i].getFd() == fd)
 			{_clients.erase(_clients.begin() + i); break;}
 	}
-
+	close(fd); // Tanquem definitivament el fd
 }

@@ -1,9 +1,9 @@
 #include "Channel.hpp"
 
-Channel::Channel()
+Channel::Channel( Client *client )
 {
-
-
+	_admins.push_back(client->getNickName());
+	_clients.push_back(client->getNickName());
 }
 void	Channel::addClients( Client *client )
 {
