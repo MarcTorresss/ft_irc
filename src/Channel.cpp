@@ -3,8 +3,8 @@
 Channel::Channel()
 {
 
-
 }
+
 void	Channel::addClients( Client *client )
 {
 	_clients.push_back(client->getNickName());
@@ -12,12 +12,14 @@ void	Channel::addClients( Client *client )
 
 void	Channel::addAdmins( Client *client )
 {
-	_admins.push_back(client->getNickName());
+	if (isAdmins( client ))
+		_admins.push_back(client->getNickName());
 }
 
 void	Channel::addInvites( Client *client )
 {
-	_invites.push_back(client->getNickName());
+	if (isAdmins( client ))
+		_invites.push_back(client->getNickName());
 }
 
 bool	Channel::isClients( Client *client )
@@ -84,4 +86,20 @@ void	Channel::removeUsersLimitChannel( Client *client )
 Channel::~Channel()
 {
 
+}
+
+void Channel::setName(std::string name){
+	_channelName = name;
+}
+
+void Channel::setPassword(std::string password){
+	_channelPassword = password;
+}
+
+std::string Channel::getName(){
+	return _channelName;
+}
+
+std::string Channel::getPassword(){
+	return _channelPassword;
 }

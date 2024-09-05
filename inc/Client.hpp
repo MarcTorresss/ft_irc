@@ -9,6 +9,7 @@ private:
 	std::string	_userName;
 	std::string	_nickName;
 	int _fd;
+	int _status;
 	std::string			_ipAdd; //-> client ip address
 	struct sockaddr_in	_clientAdd; // direccion i puerto del cliente
 	std::string			_sendInfo;
@@ -35,6 +36,8 @@ public:
     void	setReceiveInfo( std::string reciveinfo );
     int		sendInfo( void );
 	int		receiveInfo( void );
+	void		setStatus(int status);
+	int		getStatus();
 };
 
 #endif

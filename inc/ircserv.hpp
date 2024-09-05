@@ -26,4 +26,12 @@
 #include "Client.hpp"
 #include "Server.hpp"
 
+enum _statusClient
+{
+	PASS = 0,
+	NICK,
+	USER,
+	DONE
+};
+
 #endif
