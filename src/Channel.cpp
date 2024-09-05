@@ -53,6 +53,33 @@ bool	Channel::isInvites( Client *client )
 	return false;
 }
 
+void	Channel::removeInvite( Client *client )
+{
+	std::vector< std::string >::iterator it;
+    for (it = _invites.begin(); it != _invites.end(); ++it)
+	{
+    	if (*it == client->getNickName())
+			_invites.erase(it);
+	}
+}
+
+void	Channel::removeTopic( Client *client )
+{
+	if (isAdmins( client ))
+		_topic = false;
+}
+
+void	Channel::removeChannelPassword( Client *client )
+{
+	if (isAdmins( client ))
+		_channelPassword = "";
+}
+
+void	Channel::removeUsersLimitChannel( Client *client )
+{
+	if (isAdmins( client ))
+		_LimitUsersChannel = 0;
+}
 
 Channel::~Channel()
 {
