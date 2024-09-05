@@ -2,7 +2,6 @@
 # define CLIENT_HPP_
 
 # include "ircserv.hpp"
-# include <errno.h>
 
 class Client
 {

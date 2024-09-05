@@ -81,42 +81,23 @@ void	Client::setReceiveInfo( std::string reciveinfo )
 
 int	Client::sendInfo( void )
 {
- 	int ret = send(_fd, NULL, 0, 0);
-    if (ret == -1)
-    {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) // operacion de escritura bloqueada
-            return 0;
-        else
-            return (std::cerr << "Error en send: " << strerror(errno) << std::endl, 0);
-    }
-
     int bytes = send(_fd, _sendInfo.c_str(), _sendInfo.length(), 0);
     if (bytes == -1)
-    {
-        if (errno != EAGAIN && errno != EWOULDBLOCK)
-            return (std::cerr << "Error en send: " << strerror(errno) << std::endl, 0);
-        return 0;
-    }
-    return 1; // El mensaje se ha enviado nishe
+        return (std::cerr << "Error en send " << std::endl, 0);
+    return 1;
 }
 
 int	Client::receiveInfo( void )
 {
 	char buff[BUFF_SIZE];
     ssize_t bytes;
-    bool running = true;
 
-    while (running)
+    while (true)
     {
         memset(buff, 0, sizeof(buff));
         bytes = recv(_fd, buff, sizeof(buff) - 1, 0); // Rabem dades.
         if (bytes <= 0)
-        {
-            if (errno == EWOULDBLOCK || errno == EAGAIN)
-                running = false;
-            else
-                return (std::cout << "Client <" << _fd << "> Disconnected" << std::endl, 0);
-        }
+            return (std::cout << "Client <" << _fd << "> Disconnected or Error occurred" << std::endl, 0);
         else
             _receiveInfo += std::string(buff);
     }
