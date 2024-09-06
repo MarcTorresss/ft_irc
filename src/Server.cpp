@@ -3,9 +3,11 @@
 bool Server::_signal = false;
 
 Server::Server(): _serSocketFd(-1), _port(4444){
+	serverInit();
 }
 
 Server::Server(int port): _serSocketFd(-1), _port(port){
+	serverInit();
 }
 
 Server::~Server(){
@@ -38,15 +40,15 @@ void Server::serSocket(){
 
 void Server::acceptNewClient(){
 	Client client;
+
 	struct sockaddr_in cliAddr;
 	socklen_t len = sizeof(cliAddr);
-	struct pollfd cliPoll;
+	//struct pollfd cliPoll;
 	int cliSocket = accept(_serSocketFd, (struct sockaddr *)&(cliAddr), &len);
 	if (cliSocket < 0) {
 		std::cout << "unable to accept new client" << std::endl;
 		return;
 	}
-	
 }
 void Server::clearClients(int fd){
 	for(size_t i = 0; i < _fds.size(); i++){ //-> remove the client from the pollfd
