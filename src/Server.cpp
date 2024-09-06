@@ -254,7 +254,7 @@ void	Server::_handleJoin(Client *cli, std::string& params){
 	std::cout << "client <" << cli->getFd() << "> wants to join channel " << params << std::endl;
 	for (int i = 0; _channels.size(); ++i){
 		if (_channels[i].getName() == params)
-			;//join channel + check channel perms (password, invite only, has been invited?)
+			_channels[i].addClient(cli);//join channel + check channel perms (password, invite only, has been invited?)
 	}
 	//else create channel
 }
@@ -285,29 +285,32 @@ void	Server::_handleMode(Client *cli, std::string& params){
 	if (params == ""){
 		std::cout << "the current channel modes are [" << "]" <<std::endl; //print los channel modes
 	}
-	std::string modes[] = {"i","t","k","o"};
+	std::string modes[] = {"i","t","k","o","l"};
 	int i = 0;
 
-	for (i = 0; i < 4; ++i){
+	for (i = 0; i < 5; ++i){
 		if (modes[i] == params)
 			break;
 	}
 	switch (i)
 	{
 		case 0: //i
-			/* code */
+			_channels[0].setInviteOnly(cli);
 			break;
 		case 1: //t
-			/* code */
+			_channels[0].setTopicAdmin(cli);
 			break;
 		case 2: //k
-			/* code */
+			_channels[0].setPassword(cli,params);
 			break;
 		case 3: //o
-			/* code */
+			_channels[0].addAdmin(cli,params);
+			break;
+		case 4: //l
+			_channels[0].setUserLimit(cli,params);
 			break;
 		default:
-			std::cout << ERR << "Channel MODE not existent [i, t, k, o]" <<std::endl;
+			std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
 			break;
 	}
 }
