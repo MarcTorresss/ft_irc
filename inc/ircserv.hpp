@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <poll.h>
 #include <csignal>
+#include <cstring>
 #include <cstdlib>
 
 //-------------------------COLORS------------------------------//
@@ -24,5 +25,13 @@
 //---------------------------CLASSES---------------------------//
 #include "Client.hpp"
 #include "Server.hpp"
+
+enum _statusClient
+{
+		PASS = 0,
+		NICK,
+		USER,
+		DONE
+};
 
 #endif

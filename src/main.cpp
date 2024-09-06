@@ -44,4 +44,5 @@ int main( int argc, char **argv)
 	if (check_arguments(argc, argv) < 0)
 		return -1;
 	Server server(atoi(argv[1]));
+	server.serverInit();
 }
