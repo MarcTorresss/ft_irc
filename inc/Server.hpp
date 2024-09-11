@@ -38,8 +38,8 @@ public:
 	Server(int port);
 	~Server();
 
-	void	serverInit();
-	void	serSocket();
+	void	createSocket();
+	void 	loop();
 	void	acceptNewClient();
 	void	receiveNewData(int fd);
 	void	check_comand( char *buff, Client *cli );

@@ -14,7 +14,7 @@ int check_arguments(int argc, char **argv) {
 	int i = 0;
 	for (i=0; argv[1][i] == '0'; ++i);
 	std::string port(&argv[1][i]);
-	std::cout << WHI << "PORT IS: " << port << RED << std::endl;
+	//std::cout << WHI << "PORT IS: " << port << RED << std::endl;
 	if (port.length() > 6){
 		std::cerr << ERR <<"Invalid Port" << std::endl;
 		return -1;
@@ -37,9 +37,9 @@ int check_arguments(int argc, char **argv) {
 		return -1;
 	}
 	std::string password(argv[2]);
-	if (password.length() > 30){ //numero arbitrario cambiable 
+	if (password.length() > 30){ 
 		std::cerr << ERR <<"Password is too long (max 30 chars)" << WHI<< std::endl;
 		return -1;
 	}
-	return 1;
+	return 0;
 }
