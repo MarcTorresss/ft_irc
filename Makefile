@@ -6,7 +6,7 @@ DIR_SRC = src/
 
 # *******************************	FILES	******************************* #
 
-FILES		=	main.cpp Server.cpp Client.cpp Channel.cpp
+FILES		=	main.cpp Server.cpp Client.cpp Channel.cpp utils.cpp
 FILES_SRC	=	$(addprefix $(DIR_SRC),$(FILES))
 
 # *******************************  OBJECTS	******************************* #

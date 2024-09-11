@@ -15,7 +15,6 @@ class Server
 private:
 	int _serSocketFd;
 	int _port;
-	static bool _signal;
 	std::vector<Client> _clients;
 	std::vector<struct pollfd> _fds;
 
@@ -44,9 +43,6 @@ public:
 	void	acceptNewClient();
 	void	receiveNewData(int fd);
 	void	check_comand( char *buff, Client *cli );
-
-
-	static void signalHandler(int signum);
 
 	void closeFds();
 	void clearClients(int fd);

@@ -34,4 +34,10 @@ enum _statusClient
 		DONE
 };
 
+//----------------------------UTILS----------------------------//
+extern bool serverShutdown;
+
+void signalHandler(int signum);
+int check_arguments(int argc, char **argv);
+
 #endif

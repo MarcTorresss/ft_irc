@@ -1,7 +1,5 @@
 #include "Server.hpp"
 
-bool Server::_signal = false;
-
 Server::Server(): _serSocketFd(-1), _port(4444){
 	serverInit();
 }
@@ -21,12 +19,12 @@ void Server::serverInit()
 	std::cout << GRE << "Server <" << _serSocketFd << "> Connected" << WHI << std::endl << "";
 	std::cout << "Server is ready, waiting for clients..." << std::endl;
 
-	while (!Server::_signal)
+	while (!serverShutdown)
 	{
 		int pollResult = poll(&_fds[0],_fds.size(),-1);
-    	if (pollResult == -1 && !Server::_signal)
+    	if (pollResult == -1 && !serverShutdown)
 		{
-        	throw std::runtime_error("Thee function poll() failed");
+        	throw std::runtime_error("The function poll() failed");
 		}
 		for (size_t i = 0; i < _fds.size(); i++)
 		{
@@ -42,11 +40,6 @@ void Server::serverInit()
 	//closeFds();
 }
 
-void Server::signalHandler(int signum)
-{
-	(void)signum;
-	Server::_signal = true;
-}
 
 void Server::serSocket()
 {
