@@ -6,9 +6,9 @@
 class Client
 {
 private:
-	std::string	_userName;
-	std::string	_nickName;
-	int _fd;
+	std::string			_userName;
+	std::string			_nickName;
+	int 				_fd;
 	std::string			_ipAdd; //-> client ip address
 	struct sockaddr_in	_clientAdd; // direccion i puerto del cliente
 	std::string			_sendInfo;

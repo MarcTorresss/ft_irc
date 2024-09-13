@@ -28,6 +28,10 @@ void Server::loop()
 					receiveNewData(_fds[i].fd);
 			}
 		}
+		//si es el fd del socket que presenta informacion,
+		//es una conexion entrante -> accept client
+		//de lo contrario es un fd de un cliente ya existente
+		//que se esta comunicando->receiveData
 	}
 	//closeFds();
 }
@@ -67,39 +71,29 @@ void Server::createSocket()
 
 void Server::acceptNewClient()
 {
-	/*Client client;
-	struct sockaddr_in cliAddr;
-	socklen_t len = sizeof(cliAddr);
-	//struct pollfd cliPoll;
-	int cliSocket = accept(_serSocketFd, (struct sockaddr *)&(cliAddr), &len);
-	if (cliSocket < 0) {
-		std::cout << "unable to accept new client" << std::endl;
-		return;
-	}*/
-	//Temporal es solo para que funcione falta lo de javi, arriba in processss
 	std::cout << GRE << "NEW CLIENT" << WHI << std::endl;
 	Client cli; //-> create a new client
-	struct sockaddr_in cliadd;
-	struct pollfd NewPoll;
-	socklen_t len = sizeof(cliadd);
+	struct sockaddr_in cliSocket;//for storing IP, PORT, PROT
+	struct pollfd newPoll;
+	socklen_t len = sizeof(cliSocket);
 
-	int incofd = accept(_serSocketFd, (sockaddr *)&(cliadd), &len); //-> accept the new client
-	if (incofd == -1)
-		{std::cout << "accept() failed" << std::endl; return;}
+	int cliFd = accept(_serSocketFd, (sockaddr *)&(cliSocket), &len); //-> accept the new client & store sock info in cliSocket
+	if (cliFd == -1)
+		std::cout << "accept() failed" << std::endl; return; //throw?
 
-	if (fcntl(incofd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option (O_NONBLOCK) for non-blocking socket
-		{std::cout << "fcntl() failed" << std::endl; return;}
+	if (fcntl(cliFd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option (O_NONBLOCK) for non-blocking socket
+		std::cout << "fcntl() failed" << std::endl; return;
 
-	NewPoll.fd = incofd; //-> add the client socket to the pollfd
-	NewPoll.events = POLLIN; //-> set the event to POLLIN for reading data
-	NewPoll.revents = 0; //-> set the revents to 0
+	newPoll.fd = cliFd; //-> add the client socket to the pollfd
+	newPoll.events = POLLIN; //-> set the event to POLLIN for reading data
+	newPoll.revents = 0; //-> set the revents to 0
 
-	cli.setFd(incofd); //-> set the client file descriptor
-	cli.setIpAdd(inet_ntoa((cliadd.sin_addr))); //-> convert the ip address to string and set it
+	cli.setFd(cliFd); //-> store the client file descriptor
+	cli.setIpAdd(inet_ntoa((cliSocket.sin_addr))); //-> convert the ip address to string and set it
 	_clients.push_back(cli); //-> add the client to the vector of clients
-	_fds.push_back(NewPoll); //-> add the client socket to the pollfd
+	_fds.push_back(newPoll); //-> add the client socket to the pollfd
 
-	std::cout << GRE << "Client <" << incofd << "> Connected" << WHI << std::endl;
+	std::cout << GRE << "Client <" << cliFd << "> Connected" << WHI << std::endl;
 }
 
 Client* Server::getClient(int fd) {
