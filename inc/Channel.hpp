@@ -27,11 +27,12 @@ public:
 	bool	isAdmin( Client *client );
 	bool	isInvite( Client *client );
 
-	void	addClient( Client *client);
 	void	addAdmin( Client *client, std::string target );
-	void	removeAdmin( Client *client, std::string target );
 	void	addInvite( Client *client, std::string target );
+	void	addClient( Client *client);
+	void	removeAdmin( Client *client, std::string target );
 	void	removeInvite( Client *client, std::string target );
+	void	removeClient(Client *client, std::string target);
 
 	std::string getName();
 	std::string getTopic();

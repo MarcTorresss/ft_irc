@@ -8,17 +8,26 @@ Channel::~Channel(){
 
 void	Channel::addClient( Client *client )
 {
+	if (_clients.size() >= _userLimit)
+		throw std::runtime_error("Channel is full!");
+	if (_inviteOnly && !isInvite(client))
+		throw std::runtime_error("User was not invited");
 	_clients.push_back(client->getNickName());
 }
 
 void	Channel::addAdmin( Client *client, std::string target )
 {
-	if (isAdmin( client ))
-		_admins.push_back(target);
+	if (!isAdmin( client ))
+		throw std::runtime_error("Not admin");
+	if (!isClient(target))
+		throw std::runtime_error("That user is not connected to the server");
+	_admins.push_back(target);
 }
 
 void	Channel::removeAdmin( Client *client, std::string target )
 {
+	if (!isAdmin( client ))
+		throw std::runtime_error("Not admin");
 	int i = 0;
 	std::vector< std::string >::iterator it;
 	for (i = 0; i < _admins.size(); ++i){
@@ -26,17 +35,27 @@ void	Channel::removeAdmin( Client *client, std::string target )
 			break;
 	}
 	std::vector< std::string>::iterator it = ( _admins.begin() + i );
-	if (isAdmin( client )){
-		_admins.erase(it);
-		//return true;
+	_admins.erase(it);
+}
+
+void	removeClient(Client *client, std::string target){
+	if (!isAdmin( client ))
+		throw std::runtime_error("Not admin");
+	int i = 0;
+	std::vector< std::string >::iterator it;
+	for (i = 0; i < _clients.size(); ++i){
+		if (_clients[i] == target)
+			break;
 	}
-	return; //return false
+	std::vector< std::string>::iterator it = ( _clients.begin() + i );
+	_clients.erase(it);
 }
 
 void	Channel::addInvite( Client *client, std::string target )
 {
-	if (isAdmin( client ))
-		_invites.push_back(target);
+	if (!isAdmin( client ))
+		throw std::runtime_error("Not admin");
+	_invites.push_back(target);
 }
 
 bool	Channel::isClient( Client *client )

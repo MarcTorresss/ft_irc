@@ -53,6 +53,7 @@ public:
 
 	void closeFds();
 	void clearClients(int fd);
+	int	getChannelIndex(); //DEBE RETORNAR EL INDICE DEL ARRAY DEL CANAL DONDE SE HA ENVIADO EL MENSAJE
 };
 
 #endif

@@ -121,6 +121,10 @@ Client* Server::getClient(int fd) {
     return NULL;
 }
 
+int	getChannelIndex(){
+	return 0; //DEBE RETORNAR EL INDICE DEL ARRAY DEL CANAL DONDE SE HA ENVIADO EL MENSAJE
+}
+
 void Server::clearClients(int fd){
 	for(size_t i = 0; i < _fds.size(); i++){ //-> remove the client from the pollfd
 		if (_fds[i].fd == fd)
@@ -264,21 +268,19 @@ void	Server::_handlePrivmsg(Client *cli, std::string& params){
 }
 
 void	Server::_handleKick(Client *cli, std::string& params){
-	//1. get channel the message was sent in
+	int channelIdx = getChannelIndex();
 	//2. check isAdmin()
 	//3. execute kick
 }
 
 void	Server::_handleInvite(Client *cli, std::string& params){
-	//1. get channel the message was sent in
+	int channelIdx = getChannelIndex();
 	//2. allow and notify user
 }
 
 void	Server::_handleTopic(Client *cli, std::string& params){
-	//1. get channel the message was sent in
-	//2. check if TOPIC is restricted to admins
-	//2. check isAdmin() (if needed)
-	//3. change topic
+	int channelIdx = getChannelIndex();
+	_channels[channelIdx].setTopic(params);
 }
 
 void	Server::_handleMode(Client *cli, std::string& params){
@@ -287,30 +289,33 @@ void	Server::_handleMode(Client *cli, std::string& params){
 	}
 	std::string modes[] = {"i","t","k","o","l"};
 	int i = 0;
-
 	for (i = 0; i < 5; ++i){
 		if (modes[i] == params)
 			break;
 	}
-	switch (i)
-	{
-		case 0: //i
-			_channels[0].setInviteOnly(cli);
-			break;
-		case 1: //t
-			_channels[0].setTopicAdmin(cli);
-			break;
-		case 2: //k
-			_channels[0].setPassword(cli,params);
-			break;
-		case 3: //o
-			_channels[0].addAdmin(cli,params);
-			break;
-		case 4: //l
-			_channels[0].setUserLimit(cli,params);
-			break;
-		default:
-			std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
-			break;
+	try{
+		switch (i) //DONE
+		{
+			case 0: //i
+				_channels[0].setInviteOnly(cli);
+				break;
+			case 1: //t
+				_channels[0].setTopicAdmin(cli);
+				break;
+			case 2: //k
+				_channels[0].setPassword(cli,params);
+				break;
+			case 3: //o
+				_channels[0].addAdmin(cli,params);
+				break;
+			case 4: //l
+				_channels[0].setUserLimit(cli,params);
+				break;
+			default:
+				std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
+				break;
+		}
+	}catch(error){
+		std::cout << ERR << error <<std::endl;
 	}
 }
