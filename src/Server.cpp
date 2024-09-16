@@ -269,18 +269,19 @@ void	Server::_handlePrivmsg(Client *cli, std::string& params){
 
 void	Server::_handleKick(Client *cli, std::string& params){
 	int channelIdx = getChannelIndex();
-	//2. check isAdmin()
-	//3. execute kick
+	_channels[channelIdx].removeClient(cli, params);
 }
 
 void	Server::_handleInvite(Client *cli, std::string& params){
 	int channelIdx = getChannelIndex();
-	//2. allow and notify user
+	//does the client need to be connected to server to be invited??
+	_channels[channelIdx].addInvite(cli, params);
+	//2. notify user?
 }
 
 void	Server::_handleTopic(Client *cli, std::string& params){
 	int channelIdx = getChannelIndex();
-	_channels[channelIdx].setTopic(params);
+	_channels[channelIdx].setTopic(cli, params);
 }
 
 void	Server::_handleMode(Client *cli, std::string& params){

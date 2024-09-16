@@ -20,7 +20,7 @@ void	Channel::addAdmin( Client *client, std::string target )
 	if (!isAdmin( client ))
 		throw std::runtime_error("Not admin");
 	if (!isClient(target))
-		throw std::runtime_error("That user is not connected to the server");
+		throw std::runtime_error("That user is not connected to the channel");
 	_admins.push_back(target);
 }
 
@@ -41,6 +41,8 @@ void	Channel::removeAdmin( Client *client, std::string target )
 void	removeClient(Client *client, std::string target){
 	if (!isAdmin( client ))
 		throw std::runtime_error("Not admin");
+	if (!isClient(target))
+		throw std::runtime_error("That user is not connected to the channel");
 	int i = 0;
 	std::vector< std::string >::iterator it;
 	for (i = 0; i < _clients.size(); ++i){
