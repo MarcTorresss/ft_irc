@@ -5,6 +5,7 @@ bool serverShutdown = false;
 int main( int argc, char **argv)
 {
 	signal(SIGINT, signalHandler);
+	signal(SIGQUIT, signalHandler);
 	if (check_arguments(argc, argv) == 0) 
 	{
 		Server server(atoi(argv[1]));

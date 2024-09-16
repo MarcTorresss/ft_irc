@@ -71,6 +71,7 @@ void Server::createSocket()
 
 void Server::acceptNewClient()
 {
+	// Send a basic IRC welcome message to confirm connection
 	std::cout << GRE << "NEW CLIENT" << WHI << std::endl;
 	Client cli; //-> create a new client
 	struct sockaddr_in cliSocket;//for storing IP, PORT, PROT
@@ -84,6 +85,9 @@ void Server::acceptNewClient()
 	if (fcntl(cliFd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option (O_NONBLOCK) for non-blocking socket
 		std::cout << "fcntl() failed" << std::endl; return;
 
+    std::string welcome = ":localhost 001 " + cli.getNickName() + " :Welcome to the IRC server!\r\n";
+    send(cliFd, welcome.c_str(), welcome.size(), 0);
+	
 	newPoll.fd = cliFd; //-> add the client socket to the pollfd
 	newPoll.events = POLLIN; //-> set the event to POLLIN for reading data
 	newPoll.revents = 0; //-> set the revents to 0
