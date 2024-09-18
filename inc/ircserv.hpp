@@ -29,10 +29,10 @@
 
 enum _statusClient
 {
-		PASS = 0,
-		NICK,
-		USER,
-		DONE
+	PASS = 0,
+	NICK,
+	USER,
+	DONE
 };
 
 //----------------------------UTILS----------------------------//

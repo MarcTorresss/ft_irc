@@ -109,58 +109,20 @@ Client* Server::getClient(int fd) {
     return NULL;
 }
 
-void	Server::check_comand( char *buff, Client *cli )
-{
-	std::string receivedData(buff);
-    std::istringstream iss(receivedData);
-    std::string command;
-    std::string params;
+int	getChannelIndex(){
+	return 0; //DEBE RETORNAR EL INDICE DEL ARRAY DEL CANAL DONDE SE HA ENVIADO EL MENSAJE
+}
 
-    // Separar el comando de los parámetros
-    iss >> command;
-    std::getline(iss, params);
-
-    std::string commands[] = { "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PASS" };
-    int i = 0;
-    for (i = 0; i < 9; i++) {
-        if (commands[i] == command)
-            break;
-    }
-	(void) cli;
-    switch (i)
-    {
-        case 0: // NICK
-            //_setNickname(cli, params);
-			std::cout << "entro" << std::endl;
-            break;
-        case 1: // USER
-            //_setUser(cli, params);
-            break;
-        case 2: // JOIN
-            //_handleJoin(cli, params);
-            break;
-        case 3: // PRIVMSG
-            //_handlePrivmsg(cli, params);
-            break;
-        case 4: // KICK
-            //_handleKick(cli, params);
-            break;
-        case 5: // INVITE
-            //_handleInvite(cli, params);
-            break;
-        case 6: // TOPIC
-            //_handleTopic(cli, params);
-            break;
-        case 7: // MODE
-            //_handleMode(cli, params);
-            break;
-        case 8: // PASS
-            //_authenticatePassword(cli, params);
-            break;
-        default:
-            std::cout << "Comando no reconocido: " << command << std::endl;
-            break;
+void Server::clearClients(int fd){
+	for(size_t i = 0; i < _fds.size(); i++){ //-> remove the client from the pollfd
+		if (_fds[i].fd == fd)
+			{_fds.erase(_fds.begin() + i); break;}
 	}
+	for(size_t i = 0; i < _clients.size(); i++){ //-> remove the client from the vector of clients
+		if (_clients[i].getFd() == fd)
+			{_clients.erase(_clients.begin() + i); break;}
+	}
+
 }
 
 void	Server::receiveNewData(int fd)
@@ -193,14 +155,157 @@ void	Server::receiveNewData(int fd)
     }
 }
 
-void Server::clearClients(int fd){
-	for(size_t i = 0; i < _fds.size(); i++){ //-> remove the client from the pollfd
-		if (_fds[i].fd == fd)
-			{_fds.erase(_fds.begin() + i); break;}
+void	Server::check_comand( char *buff, Client *cli )
+{
+	std::string receivedData(buff);
+    std::istringstream iss(receivedData);
+    std::string command;
+    std::string params;
+	std::string temp = "";
+
+    // Separar el comando de los parámetros
+    iss >> command;
+    std::getline(iss, params);
+
+	int i = 0;
+	for (i = 0; command[i] != 0; ++i){
+		temp += (char)toupper(command[i]);}
+	command = temp;
+    std::string commands[] = { "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PASS", "QUIT" };
+    for (i = 0; i < 10; i++) {
+        if (commands[i] == command)
+            break;
+    }
+    switch (i)
+    {
+        case 0: // NICK
+            _setNickname(cli, params);
+            break;
+        case 1: // USER
+            _setUser(cli, params);
+            break;
+        case 2: // JOIN
+            _handleJoin(cli, params);
+            break;
+        case 3: // PRIVMSG
+            _handlePrivmsg(cli, params);
+            break;
+        case 4: // KICK
+            _handleKick(cli, params);
+            break;
+        case 5: // INVITE
+            _handleInvite(cli, params);
+            break;
+        case 6: // TOPIC
+            _handleTopic(cli, params);
+            break;
+        case 7: // MODE
+            _handleMode(cli, params);
+            break;
+        case 8: // PASS
+            //_authenticatePassword(cli, params);
+            break;
+		case 9: // PASS
+            //_quitChannel(cli, params);
+            break;
+        default:
+            std::cout << "Comando no reconocido: " << command << std::endl;
+            break;
 	}
-	for(size_t i = 0; i < _clients.size(); i++){ //-> remove the client from the vector of clients
-		if (_clients[i].getFd() == fd)
-			{_clients.erase(_clients.begin() + i); break;}
+}
+
+void	Server::_setNickname(Client *cli, std::string& params){
+	if (params == ""){
+		std::cout << "client " << cli->getFd() << " NICK is: " << cli->getNickName() << "-" << std::endl;
+	}
+	if (cli->getStatus() >= PASS){
+		std::cout << "NICK changed" << std::endl;
+		cli->setNickName(params);
+	}
+	else{
+		std::cout << ERR << "cannot change nick if password is not set" << std::endl;
+		//send message to client
+	}
+}
+
+void	Server::_setUser(Client *cli, std::string& params){
+	if (params == ""){
+		std::cout << "client <" << cli->getFd() << "> USR is: " << cli->getUserName() << "-" << std::endl;
+	}
+	if (cli->getStatus() >= NICK){
+		std::cout << "USR changed" << std::endl;
+		cli->setUserName(params);
+	}
+	else{
+		std::cout << ERR << "cannot change username if nickname is not set" << std::endl;
+		//send err message to client
+	}
+}
+
+void	Server::_handleJoin(Client *cli, std::string& params){
+	std::cout << "client <" << cli->getFd() << "> wants to join channel " << params << std::endl;
+	for (int i = 0; _channels.size(); ++i){
+		if (_channels[i].getName() == params)
+			_channels[i].addClient(cli);//join channel + check channel perms (password, invite only, has been invited?)
+	}
+	//else create channel
+}
+
+void	Server::_handlePrivmsg(Client *cli, std::string& params){
+	//create a private(invite only) channel between 2 clients
+}
+
+void	Server::_handleKick(Client *cli, std::string& params){
+	int channelIdx = getChannelIndex();
+	_channels[channelIdx].removeClient(cli, params);
+}
+
+void	Server::_handleInvite(Client *cli, std::string& params){
+	int channelIdx = getChannelIndex();
+	//does the client need to be connected to server to be invited??
+	_channels[channelIdx].addInvite(cli, params);
+	//2. notify user?
+}
+
+void	Server::_handleTopic(Client *cli, std::string& params){
+	int channelIdx = getChannelIndex();
+	_channels[channelIdx].setTopic(cli, params);
+}
+
+void	Server::_handleMode(Client *cli, std::string& params){
+	if (params == ""){
+		std::cout << "the current channel modes are [" << "]" <<std::endl; //print los channel modes
+	}
+	std::string modes[] = {"i","t","k","o","l"};
+	int i = 0;
+	for (i = 0; i < 5; ++i){
+		if (modes[i] == params)
+			break;
+	}
+	try{
+		switch (i) //DONE
+		{
+			case 0: //i
+				_channels[0].setInviteOnly(cli);
+				break;
+			case 1: //t
+				_channels[0].setTopicAdmin(cli);
+				break;
+			case 2: //k
+				_channels[0].setPassword(cli,params);
+				break;
+			case 3: //o
+				_channels[0].addAdmin(cli,params);
+				break;
+			case 4: //l
+				_channels[0].setUserLimit(cli,params);
+				break;
+			default:
+				std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
+				break;
+		}
+	}catch(error){
+		std::cout << ERR << error <<std::endl;
 	}
 	close(fd); // Tanquem definitivament el fd
 }
