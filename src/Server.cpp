@@ -1,7 +1,5 @@
 #include "Server.hpp"
 
-bool Server::_signal = false;
-
 Server::Server(): _serSocketFd(-1), _port(4444){
 }
 
@@ -9,22 +7,16 @@ Server::Server(int port): _serSocketFd(-1), _port(port){
 }
 
 Server::~Server(){
-
 }
 
-void Server::serverInit()
+void Server::loop()
 {
-	serSocket();
-
-	std::cout << GRE << "Server <" << _serSocketFd << "> Connected" << WHI << std::endl << "";
-	std::cout << "Server is ready, waiting for clients..." << std::endl;
-
-	while (!Server::_signal)
+	while (!serverShutdown)
 	{
 		int pollResult = poll(&_fds[0],_fds.size(),-1);
-    	if (pollResult == -1 && !Server::_signal)
+    	if (pollResult == -1 && !serverShutdown)
 		{
-        	throw std::runtime_error("Thee function poll() failed");
+        	throw std::runtime_error("The function poll() failed");
 		}
 		for (size_t i = 0; i < _fds.size(); i++)
 		{
@@ -36,17 +28,16 @@ void Server::serverInit()
 					receiveNewData(_fds[i].fd);
 			}
 		}
+		//si es el fd del socket que presenta informacion,
+		//es una conexion entrante -> accept client
+		//de lo contrario es un fd de un cliente ya existente
+		//que se esta comunicando->receiveData
 	}
 	//closeFds();
 }
 
-void Server::signalHandler(int signum)
-{
-	(void)signum;
-	Server::_signal = true;
-}
 
-void Server::serSocket()
+void Server::createSocket()
 {
 	struct	sockaddr_in sockAddr;
 	struct	pollfd		serPoll;
@@ -59,57 +50,54 @@ void Server::serSocket()
 
 	_serSocketFd = socket(AF_INET, SOCK_STREAM, 0); //comunicacion ipv4 por tcp, protocolo variable segun el sistema
 	if (_serSocketFd == -1)
-		throw(std::logic_error("faild to create socket"));
+		throw(std::logic_error("failed to create socket"));
 	int en = 1;
 	if(setsockopt(_serSocketFd, SOL_SOCKET, SO_REUSEADDR, &en, sizeof(en)) == -1) // configuramos el socket con SO_REUSEADDR para poder reutilizar puertos o ips
-		throw(std::runtime_error("faild to set option (SO_REUSEADDR) on socket"));
+		throw(std::runtime_error("failed to set option (SO_REUSEADDR) on socket"));
 	if (fcntl(_serSocketFd, F_SETFL, O_NONBLOCK) == -1) // funciones como read(), write(), accept(), no se quedaran colgadas volveran con un error
-		throw(std::runtime_error("faild to set option (O_NONBLOCK) on socket"));
+		throw(std::runtime_error("failed to set option (O_NONBLOCK) on socket"));
 	if (bind(_serSocketFd, (struct sockaddr *)&sockAddr, sizeof(sockAddr)) == -1) // asignamos una ip y un puerto
-		throw(std::runtime_error("faild to bind socket"));
+		throw(std::runtime_error("failed to bind socket"));
 	if (listen(_serSocketFd, SOMAXCONN) == -1) // vinculamos el fd y configuramos la cantidad maxima de solicitudes de conexion
-		throw(std::runtime_error("listen() faild"));
+		throw(std::runtime_error("listen() failed"));
 
 	serPoll.fd = _serSocketFd; //el port d'escolta del serversocket
 	serPoll.events = POLLIN;  // poll() nos dira si hay datos para leer en fd o nuevas conexiones en un socket de servidor 
 	_fds.push_back(serPoll); //afagir el pollfd al vector
+
+	std::cout << GRE << "Server <" << _serSocketFd << "> Connected" << WHI << std::endl << "";
+	std::cout << "Waiting for clients..." << std::endl;
 }
 
 void Server::acceptNewClient()
 {
-	/*Client client;
-	struct sockaddr_in cliAddr;
-	socklen_t len = sizeof(cliAddr);
-	//struct pollfd cliPoll;
-	int cliSocket = accept(_serSocketFd, (struct sockaddr *)&(cliAddr), &len);
-	if (cliSocket < 0) {
-		std::cout << "unable to accept new client" << std::endl;
-		return;
-	}*/
-	//Temporal es solo para que funcione falta lo de javi, arriba in processss
+	// Send a basic IRC welcome message to confirm connection
 	std::cout << GRE << "NEW CLIENT" << WHI << std::endl;
 	Client cli; //-> create a new client
-	struct sockaddr_in cliadd;
-	struct pollfd NewPoll;
-	socklen_t len = sizeof(cliadd);
+	struct sockaddr_in cliSocket;//for storing IP, PORT, PROT
+	struct pollfd newPoll;
+	socklen_t len = sizeof(cliSocket);
 
-	int incofd = accept(_serSocketFd, (sockaddr *)&(cliadd), &len); //-> accept the new client
-	if (incofd == -1)
-		{std::cout << "accept() failed" << std::endl; return;}
+	int cliFd = accept(_serSocketFd, (sockaddr *)&cliSocket, &len); //-> accept the new client & store sock info in cliSocket
+	if (cliFd == -1)
+		std::cout << "accept() failed" << std::endl; return; //throw?
 
-	if (fcntl(incofd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option (O_NONBLOCK) for non-blocking socket
-		{std::cout << "fcntl() failed" << std::endl; return;}
+	if (fcntl(cliFd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option (O_NONBLOCK) for non-blocking socket
+		std::cout << "fcntl() failed" << std::endl; return;
 
-	NewPoll.fd = incofd; //-> add the client socket to the pollfd
-	NewPoll.events = POLLIN; //-> set the event to POLLIN for reading data
-	NewPoll.revents = 0; //-> set the revents to 0
+    std::string welcome = ":localhost 001 " + cli.getNickName() + " :Welcome to the IRC server!\r\n";
+    send(cliFd, welcome.c_str(), welcome.size(), 0);
+	
+	newPoll.fd = cliFd; //-> add the client socket to the pollfd
+	newPoll.events = POLLIN; //-> set the event to POLLIN for reading data
+	newPoll.revents = 0; //-> set the revents to 0
 
-	cli.setFd(incofd); //-> set the client file descriptor
-	cli.setIpAdd(inet_ntoa((cliadd.sin_addr))); //-> convert the ip address to string and set it
+	cli.setFd(cliFd); //-> store the client file descriptor
+	cli.setIpAdd(inet_ntoa((cliSocket.sin_addr))); //-> convert the ip address to string and set it
 	_clients.push_back(cli); //-> add the client to the vector of clients
-	_fds.push_back(NewPoll); //-> add the client socket to the pollfd
+	_fds.push_back(newPoll); //-> add the client socket to the pollfd
 
-	std::cout << GRE << "Client <" << incofd << "> Connected" << WHI << std::endl;
+	std::cout << GRE << "Client <" << cliFd << "> Connected" << WHI << std::endl;
 }
 
 Client* Server::getClient(int fd) {
@@ -319,4 +307,5 @@ void	Server::_handleMode(Client *cli, std::string& params){
 	}catch(error){
 		std::cout << ERR << error <<std::endl;
 	}
+	close(fd); // Tanquem definitivament el fd
 }

@@ -13,6 +13,7 @@
 #include <csignal>
 #include <cstring>
 #include <cstdlib>
+#include <map>
 
 //-------------------------COLORS------------------------------//
 #define RED "\e[1;31m"
@@ -33,5 +34,11 @@ enum _statusClient
 	USER,
 	DONE
 };
+
+//----------------------------UTILS----------------------------//
+extern bool serverShutdown;
+
+void signalHandler(int signum);
+int check_arguments(int argc, char **argv);
 
 #endif

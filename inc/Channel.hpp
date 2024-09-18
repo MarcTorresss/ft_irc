@@ -2,6 +2,9 @@
 # define CHANNEL_HPP_
 
 # include "ircserv.hpp"
+#include <iostream>
+#include <string>
+#include <sstream>
 
 class Client;
 

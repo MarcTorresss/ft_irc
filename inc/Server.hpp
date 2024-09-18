@@ -11,16 +11,17 @@
 
 class Channel;
 class Client;
+class Channel;
 
 class Server
 {
 private:
 	int _serSocketFd;
 	int _port;
-	static bool _signal;
 	std::vector<Client> _clients;
 	std::vector<Channel> _channels;
 	std::vector<struct pollfd> _fds;
+	std::vector<Channel> _channels;
 
     Client* getClient(int fd);
 
@@ -42,18 +43,18 @@ public:
 	Server(int port);
 	~Server();
 
-	void	serverInit();
-	void	serSocket();
+	void	createSocket();
+	void 	loop();
 	void	acceptNewClient();
 	void	receiveNewData(int fd);
 	void	check_comand( char *buff, Client *cli );
-
-
 	static void signalHandler(int signum);
 
 	void closeFds();
 	void clearClients(int fd);
 	int	getChannelIndex(); //DEBE RETORNAR EL INDICE DEL ARRAY DEL CANAL DONDE SE HA ENVIADO EL MENSAJE
+	void 	addChannel(const std::string& channelName, const std::string& password);
+	bool 	validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password);
 };
 
 #endif
