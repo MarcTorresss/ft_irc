@@ -1,26 +1,74 @@
 #include "Channel.hpp"
 
-Channel::Channel()
+Channel::Channel( Client *client )
 {
-
-
+	_admins.push_back(client->getNickName());
+	_clients.push_back(client->getNickName());
 }
-void	Channel::addClients( Client *client )
+std::string Channel::getName()
 {
+	return _channelName;
+}
+std::string Channel::getPass()
+{
+	return _channelPassword;
+}
+
+void	Channel::addClient( Client *client )
+{
+	if (_clients.size() >= _userLimit)
+		throw std::runtime_error("Channel is full!");
+	if (_inviteOnly && !isInvite(client))
+		throw std::runtime_error("User was not invited");
 	_clients.push_back(client->getNickName());
 }
 
-void	Channel::addAdmins( Client *client )
+void	Channel::addAdmin( Client *client, std::string target )
 {
-	_admins.push_back(client->getNickName());
+	if (!isAdmin( client ))
+		throw std::runtime_error("Not admin");
+	if (!isClient(target))
+		throw std::runtime_error("That user is not connected to the channel");
+	_admins.push_back(target);
 }
 
-void	Channel::addInvites( Client *client )
+void	Channel::removeAdmin( Client *client, std::string target )
 {
-	_invites.push_back(client->getNickName());
+	if (!isAdmin( client ))
+		throw std::runtime_error("Not admin");
+	int i = 0;
+	std::vector< std::string >::iterator it;
+	for (i = 0; i < _admins.size(); ++i){
+		if (_admins[i] == target)
+			break;
+	}
+	std::vector< std::string>::iterator it = ( _admins.begin() + i );
+	_admins.erase(it);
 }
 
-bool	Channel::isClients( Client *client )
+void	removeClient(Client *client, std::string target){
+	if (!isAdmin( client ))
+		throw std::runtime_error("Not admin");
+	if (!isClient(target))
+		throw std::runtime_error("That user is not connected to the channel");
+	int i = 0;
+	std::vector< std::string >::iterator it;
+	for (i = 0; i < _clients.size(); ++i){
+		if (_clients[i] == target)
+			break;
+	}
+	std::vector< std::string>::iterator it = ( _clients.begin() + i );
+	_clients.erase(it);
+}
+
+void	Channel::addInvite( Client *client, std::string target )
+{
+	if (!isAdmin( client ))
+		throw std::runtime_error("Not admin");
+	_invites.push_back(target);
+}
+
+bool	Channel::isClient( Client *client )
 {
 	std::vector< std::string >::iterator it;
     for (it = _clients.begin(); it != _clients.end(); ++it)
@@ -31,7 +79,7 @@ bool	Channel::isClients( Client *client )
 	return false;
 }
 
-bool	Channel::isAdmins( Client *client )
+bool	Channel::isAdmin( Client *client )
 {
 	std::vector< std::string >::iterator it;
     for (it = _admins.begin(); it != _admins.end(); ++it)
@@ -42,7 +90,7 @@ bool	Channel::isAdmins( Client *client )
 	return false;
 }
 
-bool	Channel::isInvites( Client *client )
+bool	Channel::isInvite( Client *client )
 {
 	std::vector< std::string >::iterator it;
     for (it = _invites.begin(); it != _invites.end(); ++it)
@@ -53,35 +101,63 @@ bool	Channel::isInvites( Client *client )
 	return false;
 }
 
-void	Channel::removeInvite( Client *client )
+void	Channel::removeInvite( Client *client, std::string target)
 {
 	std::vector< std::string >::iterator it;
     for (it = _invites.begin(); it != _invites.end(); ++it)
 	{
-    	if (*it == client->getNickName())
-			_invites.erase(it);
+    	if (*it == target){
+			if (isAdmin(client))
+				_invites.erase(it);
+		}
 	}
 }
 
-void	Channel::removeTopic( Client *client )
+void	Channel::setTopic( Client *client, std::string topic )
 {
-	if (isAdmins( client ))
-		_topic = false;
+	if (_adminTopic && !isAdmin( client ))
+		throw std::runtime_error("Not admin");
+	_channelTopic = topic;
 }
 
-void	Channel::removeChannelPassword( Client *client )
-{
-	if (isAdmins( client ))
-		_channelPassword = "";
+void Channel::setTopicAdmin(Client *client){
+	if (!isAdmin( client ))
+		throw std::runtime_error("Not admin");
+	_adminTopic = !_adminTopic;
 }
 
-void	Channel::removeUsersLimitChannel( Client *client )
-{
-	if (isAdmins( client ))
-		_LimitUsersChannel = 0;
+void Channel::setInviteOnly(Client *client){
+	if (!isAdmin( client ))
+		throw std::runtime_error("Not admin");
+	_inviteOnly = !_inviteOnly;
 }
 
-Channel::~Channel()
+void	Channel::setPassword( Client *client, std::string pswd )
 {
-
+	if (!isAdmin( client ))
+		throw std::runtime_error("Not admin");
+	_channelPassword = pswd;
 }
+
+void	Channel::setUserLimit( Client *client, std::string limit )
+{
+	if (!isAdmin( client ))
+		throw std::runtime_error("Not admin");
+	if (limit.length() > 6)
+		throw std::out_of_range("User limit not allowed (max. 999999)");
+	for (int i = 0; limit[i] != 0; ++i){
+		if (!isdigit(limit[i]))
+			throw std::out_of_range("User limit must be a number (max. 999999)");
+	}
+	if (limit.length() == 0)
+		_userLimit = -1;
+	int lim = atoi(limit.c_str());
+	if (lim < 0)
+		throw std::out_of_range("User limit must be a positive int (max. 999999)");
+	_userLimit = lim;
+}
+
+void Channel::setName(std::string name){_channelName = name;}
+
+std::string Channel::getName(){return _channelName;}
+std::string Channel::getPassword(){return _channelPassword;}

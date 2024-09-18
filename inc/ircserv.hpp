@@ -13,6 +13,7 @@
 #include <csignal>
 #include <cstring>
 #include <cstdlib>
+#include <map>
 
 //-------------------------COLORS------------------------------//
 #define RED "\e[1;31m"
@@ -37,5 +38,19 @@
 #define ERR_NOCHANEL "403 " + params[0] + " " + client->getNickName() + " :Channel not found\r\n" // Interactuar con un channel que no existe
 #define MSG_TOPIC332 "332 " + params[0] + " :Current topic is: " + channel->getTopic() + "\r\n"
 #define ERR_UNKCMD421 "421 " + client->getNickName() + " :Unknown command or invalid parameters\r\n"
+
+enum _statusClient
+{
+	PASS = 0,
+	NICK,
+	USER,
+	DONE
+};
+
+//----------------------------UTILS----------------------------//
+extern bool serverShutdown;
+
+void signalHandler(int signum);
+int check_arguments(int argc, char **argv);
 
 #endif

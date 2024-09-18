@@ -79,6 +79,14 @@ void	Client::setReceiveInfo( std::string reciveinfo )
 	_receiveInfo = reciveinfo;
 }
 
+void		Client::setStatus(int status){
+	_status = status;
+}
+
+int		Client::getStatus(){
+	return DONE; //for debug, real is: return _status;
+}
+
 int	Client::sendInfo( void )
 {
     int bytes = send(_fd, _sendInfo.c_str(), _sendInfo.length(), 0);
