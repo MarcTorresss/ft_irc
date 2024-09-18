@@ -191,7 +191,7 @@ void	Server::check_comand( char *buff, Client *cli )
             _setUser(cli, params);
             break;
         case 2: // JOIN
-            _handleJoin(cli, params);
+            joinChannel(cli, params);
             break;
         case 3: // PRIVMSG
             _handlePrivmsg(cli, params);
@@ -250,14 +250,31 @@ void	Server::_setUser(Client *cli, std::string& params){
 }
 
 void	Server::joinChannel(Client *cli, std::string& params){
-	(void) cli;
-	(void) params;
+	if (params == "")
+		std::cout << "Type a channel name to join" <<std::endl;
+	/////////////////////////////////// TREMENDA MIERDA
+	std::stringstream str(params);
+	std::string auxNames;
+	std::string auxPass;
+	std::string aux;
+	std::vector< std::string > names;
+	std::vector< std::string > passwds;
+	getline(str, auxNames, ' ');
+	getline(str, auxPass, ' ');
+	names.push_back(aux);
+	/////////////////////////////////////////////
 	std::cout << "client <" << cli->getFd() << "> wants to join channel " << params << std::endl;
-	for (int i = 0; _channels.size(); ++i){
-		if (_channels[i].getName() == params)
-			_channels[i].addClient(cli);//join channel + check channel perms (password, invite only, has been invited?)
+	int i;
+	for (i = 0; _channels.size(); ++i){
+		if (_channels[i].getName() == params){
+			_channels[i].addClient(cli);//check channel perms (password, invite only, has been invited?)
+			return;
+		}
 	}
-	//else create channel
+	Channel *chann = new Channel(cli);
+	chann->setName(params);
+	chann->setPassword(cli, params);
+	_channels.push_back(*chann);
 }
 
 void	Server::_handlePrivmsg(Client *cli, std::string& params){

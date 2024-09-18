@@ -87,8 +87,9 @@ int		Client::getStatus(){
 	return DONE; //for debug, real is: return _status;
 }
 
-int	Client::sendInfo( void )
+int Client::sendInfo( std::string msg )
 {
+    _sendInfo = _sendInfo + msg;
     int bytes = send(_fd, _sendInfo.c_str(), _sendInfo.length(), 0);
     if (bytes == -1)
         return (std::cerr << "Error en send " << std::endl, 0);
