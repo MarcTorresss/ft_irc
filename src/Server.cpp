@@ -170,6 +170,7 @@ void	Server::check_comand( char *buff, Client *cli )
             //_authenticatePassword(cli, params);
             break;
         default:
+			//cli->sendInfo(ERR_UNKCMD421);
             std::cout << "Comando no reconocido: " << command << std::endl;
             break;
 	}
