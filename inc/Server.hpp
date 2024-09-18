@@ -21,7 +21,6 @@ private:
 	std::vector<Client> _clients;
 	std::vector<Channel> _channels;
 	std::vector<struct pollfd> _fds;
-	std::vector<Channel> _channels;
 
     Client* getClient(int fd);
 
@@ -49,6 +48,7 @@ public:
 	void	receiveNewData(int fd);
 	void	check_comand( char *buff, Client *cli );
 	static void signalHandler(int signum);
+	void	joinChannel(Client *cli, std::string& params);
 
 	void closeFds();
 	void clearClients(int fd);

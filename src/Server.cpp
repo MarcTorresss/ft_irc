@@ -80,10 +80,16 @@ void Server::acceptNewClient()
 
 	int cliFd = accept(_serSocketFd, (sockaddr *)&cliSocket, &len); //-> accept the new client & store sock info in cliSocket
 	if (cliFd == -1)
-		std::cout << "accept() failed" << std::endl; return; //throw?
+	{
+		std::cout << "accept() failed" << std::endl;
+		return; //throw?
+	}
 
 	if (fcntl(cliFd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option (O_NONBLOCK) for non-blocking socket
-		std::cout << "fcntl() failed" << std::endl; return;
+	{
+		std::cout << "fcntl() failed" << std::endl;
+		return;
+	}
 
     std::string welcome = ":localhost 001 " + cli.getNickName() + " :Welcome to the IRC server!\r\n";
     send(cliFd, welcome.c_str(), welcome.size(), 0);
@@ -109,7 +115,7 @@ Client* Server::getClient(int fd) {
     return NULL;
 }
 
-int	getChannelIndex(){
+int	Server::getChannelIndex(){
 	return 0; //DEBE RETORNAR EL INDICE DEL ARRAY DEL CANAL DONDE SE HA ENVIADO EL MENSAJE
 }
 
@@ -209,7 +215,7 @@ void	Server::check_comand( char *buff, Client *cli )
             //_quitChannel(cli, params);
             break;
         default:
-			//cli->sendInfo(ERR_UNKCMD421);
+			cli->sendInfo(ERR_UNKCMD421);
             std::cout << "Comando no reconocido: " << command << std::endl;
             break;
 	}
@@ -243,7 +249,9 @@ void	Server::_setUser(Client *cli, std::string& params){
 	}
 }
 
-void	Server::_handleJoin(Client *cli, std::string& params){
+void	Server::joinChannel(Client *cli, std::string& params){
+	(void) cli;
+	(void) params;
 	std::cout << "client <" << cli->getFd() << "> wants to join channel " << params << std::endl;
 	for (int i = 0; _channels.size(); ++i){
 		if (_channels[i].getName() == params)
@@ -253,6 +261,8 @@ void	Server::_handleJoin(Client *cli, std::string& params){
 }
 
 void	Server::_handlePrivmsg(Client *cli, std::string& params){
+	(void) cli;
+	(void) params;
 	//create a private(invite only) channel between 2 clients
 }
 
@@ -305,8 +315,7 @@ void	Server::_handleMode(Client *cli, std::string& params){
 				std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
 				break;
 		}
-	}catch(error){
-		std::cout << ERR << error <<std::endl;
+	}catch(std::exception &e){
+		std::cout << ERR << e.what() <<std::endl;
 	}
-	close(fd); // Tanquem definitivament el fd
 }

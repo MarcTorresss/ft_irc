@@ -1,5 +1,4 @@
-#include "Server.hpp"
-#include "Channel.hpp"
+#include "ircserv.hpp"
 
 void Server::addChannel(const std::string& channelName, const std::string& password) {
     (void) channelName;
@@ -13,7 +12,7 @@ bool Server::validateChannelPassword(Client *cli, const std::string& channelName
             // If the channel exists, validate the password
             if (_channels[i].getPass() == password) {
                 std::cout << "Password is valid for channel: " << channelName << std::endl;
-                _channels[i].addClients(cli);
+                _channels[i].addClient(cli);
                 return true;
             } else {
                 std::cout << "Invalid password for channel: " << channelName << std::endl;
@@ -37,7 +36,7 @@ std::vector<std::string> splitString(const std::string& input, char delimiter)
     return ret;
 }
 
-void Server::_handleJoin(Client *cli, const std::string& params)
+void Server::_handleJoin(Client *cli, std::string& params)
 {
     //param format [#channel1,#channel2 key1,key2]
     std::vector<std::pair<std::string, std::string> > channelKeyPairs;    std::vector<std::string> channels, keys;

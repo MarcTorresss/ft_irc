@@ -17,13 +17,15 @@ private:
 
 	bool	_adminTopic;
 	bool	_inviteOnly;
-	int		_userLimit;
+	unsigned long	_userLimit;
     std::vector< std::string > _clients;
 	std::vector< std::string > _admins;
     std::vector< std::string > _invites;
 
 public:
 	Channel();
+	Channel( Client *client );
+
 	~Channel();
 
 	bool	isClient( Client *client );
@@ -39,7 +41,7 @@ public:
 
 	std::string getName();
 	std::string getTopic();
-	std::string getPassword();
+	std::string getPass();
 
 	void setUserLimit( Client *client, std::string limit );
 	void setName(std::string name);
