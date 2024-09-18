@@ -15,9 +15,9 @@ int main( int argc, char **argv)
 			server.createSocket();
 			server.loop();
 		}
-		catch(...)
+		catch(std::exception &e)
 		{
-			//std::cout << "Exception caught" << std::endl;
+			std::cout << "Exception caught" << e.what() << std::endl;
 		}
 	}
 	else

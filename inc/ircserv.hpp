@@ -13,6 +13,7 @@
 #include <csignal>
 #include <cstring>
 #include <cstdlib>
+#include <map>
 
 //-------------------------COLORS------------------------------//
 #define RED "\e[1;31m"

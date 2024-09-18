@@ -2,11 +2,11 @@ NAME	 =	ircserv
 FLAGS	 =	-std=c++98 -Wall -Wextra -Werror
 INCLUDE  =	-Iinc/
 DIR_OBJS =	objs/
-DIR_SRC = src/
+DIR_SRC  = src/
 
 # *******************************	FILES	******************************* #
 
-FILES		=	main.cpp Server.cpp Client.cpp Channel.cpp utils.cpp
+FILES		=	main.cpp Server.cpp Client.cpp Channel.cpp utils.cpp commands.cpp
 FILES_SRC	=	$(addprefix $(DIR_SRC),$(FILES))
 
 # *******************************  OBJECTS	******************************* #

@@ -24,6 +24,9 @@ private:
 public:
 	Channel( Client *client );
 
+	std::string getName();
+	std::string getPass();
+
 	bool	isClients( Client *client );
 	bool	isAdmins( Client *client );
 	bool	isInvites( Client *client );

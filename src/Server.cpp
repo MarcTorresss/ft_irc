@@ -78,7 +78,7 @@ void Server::acceptNewClient()
 	struct pollfd newPoll;
 	socklen_t len = sizeof(cliSocket);
 
-	int cliFd = accept(_serSocketFd, (sockaddr *)&(cliSocket), &len); //-> accept the new client & store sock info in cliSocket
+	int cliFd = accept(_serSocketFd, (sockaddr *)&cliSocket, &len); //-> accept the new client & store sock info in cliSocket
 	if (cliFd == -1)
 		std::cout << "accept() failed" << std::endl; return; //throw?
 

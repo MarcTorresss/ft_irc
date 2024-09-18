@@ -2,6 +2,7 @@
 # define SERVER_HPP_
 
 #include "ircserv.hpp"
+#include "Channel.hpp"
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -9,6 +10,7 @@
 # define BUFF_SIZE 1024
 
 class Client;
+class Channel;
 
 class Server
 {
@@ -17,6 +19,7 @@ private:
 	int _port;
 	std::vector<Client> _clients;
 	std::vector<struct pollfd> _fds;
+	std::vector<Channel> _channels;
 
     Client* getClient(int fd);
 
@@ -44,8 +47,10 @@ public:
 	void	receiveNewData(int fd);
 	void	check_comand( char *buff, Client *cli );
 
-	void closeFds();
-	void clearClients(int fd);
+	void 	addChannel(const std::string& channelName, const std::string& password);
+	bool 	validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password);
+	void 	closeFds();
+	void 	clearClients(int fd);
 };
 
 #endif

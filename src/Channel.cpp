@@ -5,6 +5,14 @@ Channel::Channel( Client *client )
 	_admins.push_back(client->getNickName());
 	_clients.push_back(client->getNickName());
 }
+std::string Channel::getName()
+{
+	return _channelName;
+}
+std::string Channel::getPass()
+{
+	return _channelPassword;
+}
 void	Channel::addClients( Client *client )
 {
 	_clients.push_back(client->getNickName());
