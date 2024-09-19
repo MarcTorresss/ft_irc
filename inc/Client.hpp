@@ -14,7 +14,6 @@ private:
 	struct sockaddr_in	_clientAdd; // direccion i puerto del cliente
 	std::string			_buffer;
 
-
 public:
 	Client();
 	Client(int fd, std::string ipAdd);

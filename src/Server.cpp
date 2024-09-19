@@ -11,28 +11,63 @@ Server::~Server(){
 
 void Server::loop()
 {
-	while (!serverShutdown)
-	{
-		int pollResult = poll(&_fds[0],_fds.size(),-1);
+		int	revents;
+		int pollResult = poll(&_fds[0],_fds.size(), -1);
     	if (pollResult == -1 && !serverShutdown)
 		{
         	throw std::runtime_error("The function poll() failed");
 		}
 		for (size_t i = 0; i < _fds.size(); i++)
 		{
-			if (_fds[i].revents & POLLIN)
+			revents = _fds[i].revents;
+
+        	// No hay eventos, saltar a la siguiente iteración.
+			if (revents != 0) 
 			{
-				if (_fds[i].fd == _serSocketFd)
-					acceptNewClient();
-				else
-					receiveNewData(_fds[i].fd);
-			}
+				// Manejo de errores o desconexiones inesperadas.
+				if ((revents & POLLERR) == POLLERR || (revents & POLLHUP) == POLLHUP)
+				{
+					std::cout << "Socket error or client disconnection\n";
+					clearClients(_fds[i].fd);
+				}
+				else if (revents & POLLIN) // Hay datos para leer.
+				{
+					if (_fds[i].fd == _serSocketFd) // Nueva conexión entrante.
+					{
+						acceptNewClient();
+					}
+					else // Mensaje de un cliente existente.
+					{
+						receiveNewData(_fds[i].fd);
+					}
+					// Marcar todos los fds como listos para escribir.
+					for (size_t j = 1; j < _fds.size(); j++) 
+					{
+						_fds[j].events |= POLLOUT;
+					}
+				}
+				else if (_fds[i].revents & POLLOUT) // Listo para enviar datos.
+				{
+					if (_fds[i].fd != _serSocketFd)
+					{
+						Client* cli = getClient((int)_fds[i].fd);
+						if (cli)
+						{
+							if (cli->sendInfo())
+							{
+								cli->cleanBuffer();
+							}
+							else
+							{
+								disconnectClient(cli, std::string("client disconnection: " + cli->getNickName() + "\n"), 1);
+							}
+						}
+					}
+					// Limpiar el evento POLLOUT para evitar más escrituras innecesarias.
+					_fds[i].events &= ~POLLOUT;
+				}
+        	}
 		}
-		//si es el fd del socket que presenta informacion,
-		//es una conexion entrante -> accept client
-		//de lo contrario es un fd de un cliente ya existente
-		//que se esta comunicando->receiveData
-	}
 	//closeFds();
 }
 
@@ -215,7 +250,7 @@ void	Server::check_comand( char *buff, Client *cli )
             //_quitChannel(cli, params);
             break;
         default:
-			cli->sendInfo(ERR_UNKCMD421);
+			cli->addBuffer(ERR_UNKCMD421);
             std::cout << "Comando no reconocido: " << command << std::endl;
             break;
 	}
@@ -318,4 +353,19 @@ void	Server::_handleMode(Client *cli, std::string& params){
 	}catch(std::exception &e){
 		std::cout << ERR << e.what() <<std::endl;
 	}
+}
+
+void Server::infoAllServerClients( std::string msg )
+{
+	for (size_t i = 0; i < _clients.size(); i++)
+		_clients[i].addBuffer(msg);
+}
+
+Client	*Server::getClientNickName( std::string NickName )
+{
+	std::vector<Client>::iterator it = _clients.begin();
+	for (; it != _clients.end(); ++it)
+		if ((*it).getNickName() == NickName)
+			return &(*it);
+	return NULL;
 }
