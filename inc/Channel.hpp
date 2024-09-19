@@ -49,6 +49,9 @@ public:
 	void setInviteOnly(Client *client);
 	void setTopic( Client *client, std::string topic);
 	void setTopicAdmin(Client *client);
+	int someAdmin( void );
+	void setAdmin( std::string NickName );
+	std::vector< std::string >	getClients();
 };
 
 #endif
