@@ -15,9 +15,7 @@ void Server::loop()
 	{
 		int pollResult = poll(&_fds[0],_fds.size(),-1);
     	if (pollResult == -1 && !serverShutdown)
-		{
         	throw std::runtime_error("The function poll() failed");
-		}
 		for (size_t i = 0; i < _fds.size(); i++)
 		{
 			if (_fds[i].revents & POLLIN)
@@ -28,20 +26,14 @@ void Server::loop()
 					receiveNewData(_fds[i].fd);
 			}
 		}
-		//si es el fd del socket que presenta informacion,
-		//es una conexion entrante -> accept client
-		//de lo contrario es un fd de un cliente ya existente
-		//que se esta comunicando->receiveData
 	}
 	//closeFds();
 }
-
 
 void Server::createSocket()
 {
 	struct	sockaddr_in sockAddr;
 	struct	pollfd		serPoll;
-	// struct pollfd poll_a; //;)
 
 	sockAddr.sin_family = AF_INET;
 	sockAddr.sin_port = htons(_port);
@@ -71,7 +63,6 @@ void Server::createSocket()
 
 void Server::acceptNewClient()
 {
-	// Send a basic IRC welcome message to confirm connection
 	std::cout << GRE << "NEW CLIENT" << WHI << std::endl;
 	Client cli; //-> create a new client
 	struct sockaddr_in cliSocket;//for storing IP, PORT, PROT
@@ -91,9 +82,6 @@ void Server::acceptNewClient()
 		return;
 	}
 
-    std::string welcome = ":localhost 001 " + cli.getNickName() + " :Welcome to the IRC server!\r\n";
-    send(cliFd, welcome.c_str(), welcome.size(), 0);
-	
 	newPoll.fd = cliFd; //-> add the client socket to the pollfd
 	newPoll.events = POLLIN; //-> set the event to POLLIN for reading data
 	newPoll.revents = 0; //-> set the revents to 0
@@ -103,6 +91,8 @@ void Server::acceptNewClient()
 	_clients.push_back(cli); //-> add the client to the vector of clients
 	_fds.push_back(newPoll); //-> add the client socket to the pollfd
 
+    std::string welcome = ":localhost 001 " + cli.getNickName() + " :Welcome to the IRC server!\r\n";
+    send(cliFd, welcome.c_str(), welcome.size(), 0);
 	std::cout << GRE << "Client <" << cliFd << "> Connected" << WHI << std::endl;
 }
 
@@ -128,7 +118,6 @@ void Server::clearClients(int fd){
 		if (_clients[i].getFd() == fd)
 			{_clients.erase(_clients.begin() + i); break;}
 	}
-
 }
 
 void	Server::receiveNewData(int fd)
@@ -138,7 +127,6 @@ void	Server::receiveNewData(int fd)
 	Client	*cli = getClient(fd);
 
     memset(buff, 0, BUFF_SIZE);
-
     ssize_t bytes = recv(fd, buff, BUFF_SIZE - 1, 0);
 
     if (bytes < 0)
@@ -218,104 +206,5 @@ void	Server::check_comand( char *buff, Client *cli )
 			cli->sendInfo(ERR_UNKCMD421);
             std::cout << "Comando no reconocido: " << command << std::endl;
             break;
-	}
-}
-
-void	Server::_setNickname(Client *cli, std::string& params){
-	if (params == ""){
-		std::cout << "client " << cli->getFd() << " NICK is: " << cli->getNickName() << "-" << std::endl;
-	}
-	if (cli->getStatus() >= PASS){
-		std::cout << "NICK changed" << std::endl;
-		cli->setNickName(params);
-	}
-	else{
-		std::cout << ERR << "cannot change nick if password is not set" << std::endl;
-		//send message to client
-	}
-}
-
-void	Server::_setUser(Client *cli, std::string& params){
-	if (params == ""){
-		std::cout << "client <" << cli->getFd() << "> USR is: " << cli->getUserName() << "-" << std::endl;
-	}
-	if (cli->getStatus() >= NICK){
-		std::cout << "USR changed" << std::endl;
-		cli->setUserName(params);
-	}
-	else{
-		std::cout << ERR << "cannot change username if nickname is not set" << std::endl;
-		//send err message to client
-	}
-}
-
-void	Server::joinChannel(Client *cli, std::string& params){
-	(void) cli;
-	(void) params;
-	std::cout << "client <" << cli->getFd() << "> wants to join channel " << params << std::endl;
-	for (int i = 0; _channels.size(); ++i){
-		if (_channels[i].getName() == params)
-			_channels[i].addClient(cli);//join channel + check channel perms (password, invite only, has been invited?)
-	}
-	//else create channel
-}
-
-void	Server::_handlePrivmsg(Client *cli, std::string& params){
-	(void) cli;
-	(void) params;
-	//create a private(invite only) channel between 2 clients
-}
-
-void	Server::_handleKick(Client *cli, std::string& params){
-	int channelIdx = getChannelIndex();
-	_channels[channelIdx].removeClient(cli, params);
-}
-
-void	Server::_handleInvite(Client *cli, std::string& params){
-	int channelIdx = getChannelIndex();
-	//does the client need to be connected to server to be invited??
-	_channels[channelIdx].addInvite(cli, params);
-	//2. notify user?
-}
-
-void	Server::_handleTopic(Client *cli, std::string& params){
-	int channelIdx = getChannelIndex();
-	_channels[channelIdx].setTopic(cli, params);
-}
-
-void	Server::_handleMode(Client *cli, std::string& params){
-	if (params == ""){
-		std::cout << "the current channel modes are [" << "]" <<std::endl; //print los channel modes
-	}
-	std::string modes[] = {"i","t","k","o","l"};
-	int i = 0;
-	for (i = 0; i < 5; ++i){
-		if (modes[i] == params)
-			break;
-	}
-	try{
-		switch (i) //DONE
-		{
-			case 0: //i
-				_channels[0].setInviteOnly(cli);
-				break;
-			case 1: //t
-				_channels[0].setTopicAdmin(cli);
-				break;
-			case 2: //k
-				_channels[0].setPassword(cli,params);
-				break;
-			case 3: //o
-				_channels[0].addAdmin(cli,params);
-				break;
-			case 4: //l
-				_channels[0].setUserLimit(cli,params);
-				break;
-			default:
-				std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
-				break;
-		}
-	}catch(std::exception &e){
-		std::cout << ERR << e.what() <<std::endl;
 	}
 }
