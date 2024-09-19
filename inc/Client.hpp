@@ -36,7 +36,7 @@ public:
     void	setReceiveInfo( std::string reciveinfo );
 	int		sendInfo( std::string msg );
 	int		receiveInfo( void );
-	void		setStatus(int status);
+	void	setStatus(int status);
 	int		getStatus();
 };
 
