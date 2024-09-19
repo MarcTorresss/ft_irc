@@ -34,7 +34,7 @@ public:
     void 	setClientAdd( struct sockaddr_in& clientAdd );
 	void	setSendInfo( std::string sendinfo );
     void	setReceiveInfo( std::string reciveinfo );
-    int		sendInfo( void );
+	int		sendInfo( std::string msg );
 	int		receiveInfo( void );
 	void		setStatus(int status);
 	int		getStatus();

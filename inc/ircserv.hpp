@@ -38,7 +38,7 @@
 #define ERR_INCHA443 "443 " + params[1] + " " + params[0] + " :User already in the channel\r\n" // Invitar un usuario que ya esta en el chanel
 #define ERR_NOCHANEL "403 " + params[0] + " " + client->getNickName() + " :Channel not found\r\n" // Interactuar con un channel que no existe
 #define MSG_TOPIC332 "332 " + params[0] + " :Current topic is: " + channel->getTopic() + "\r\n"
-#define ERR_UNKCMD421 "421 " + client->getNickName() + " :Unknown command or invalid parameters\r\n"
+#define ERR_UNKCMD421 "421 " + cli->getNickName() + " :Unknown command or invalid parameters\r\n"
 
 enum _statusClient
 {

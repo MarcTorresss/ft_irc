@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "ircserv.hpp"
 
 Server::Server(): _serSocketFd(-1), _port(4444){
 }
