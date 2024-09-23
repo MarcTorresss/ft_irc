@@ -11,6 +11,8 @@ Server::~Server(){
 
 void Server::loop()
 {
+	while (!serverShutdown)
+	{
 		int	revents;
 		int pollResult = poll(&_fds[0],_fds.size(), -1);
     	if (pollResult == -1 && !serverShutdown)
@@ -20,7 +22,6 @@ void Server::loop()
 		for (size_t i = 0; i < _fds.size(); i++)
 		{
 			revents = _fds[i].revents;
-
         	// No hay eventos, saltar a la siguiente iteración.
 			if (revents != 0) 
 			{
@@ -59,7 +60,7 @@ void Server::loop()
 							}
 							else
 							{
-								disconnectClient(cli, std::string("client disconnection: " + cli->getNickName() + "\n"), 1);
+								disconnectClient(cli, std::string("client disconnection: " + cli->getNickName() + "\n"));
 							}
 						}
 					}
@@ -69,6 +70,7 @@ void Server::loop()
         	}
 		}
 	//closeFds();
+	}
 }
 
 

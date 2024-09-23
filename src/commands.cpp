@@ -73,25 +73,23 @@ void Server::_handleJoin(Client *cli, std::string& params)
     //else addChannel
 }
 
-void Server::disconnectClient(Client *client, std::string msg, int mode)
+void Server::disconnectClient(Client *client, std::string msg)
 {
     std::string disconnect_msg = ":" + client->getNickName() + "!~" + client->getUserName() + " QUIT :" + msg + " \r\n";
-    // Enviar el mensaje a todos los clientes si el modo es 1
-    if (mode == 1)
-        infoAllServerClients(disconnect_msg);
-      // Iterar sobre los canales para los que el cliente está registrado
+    infoAllServerClients(disconnect_msg);
+    // Iterar sobre los canales para los que el cliente está registrado
     for (size_t i = 0; i < _channels.size(); i++)
     {
         if (_channels[i].isClient(client))
         {
-            _channels[i].removeClient(client, client->getNickName());
-            // Si el canal queda vacío, lo eliminamos
-            if (_channels[i].getClients().size() == 0)
-            {
-                _channels.erase(_channels.begin() + i);
-                i--;
-            }
-          else
+			_channels[i].removeClient(client, client->getNickName());
+			// Si el canal queda vacío, lo eliminamos
+			if (_channels[i].getClients().size() == 0)
+			{
+				_channels.erase(_channels.begin() + i);
+				i--;
+			}
+			else
             {
                 // Si no hay administradores en el canal, asignar un nuevo administrador
                 if (_channels[i].someAdmin() == 0)
