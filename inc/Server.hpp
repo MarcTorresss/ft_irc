@@ -42,7 +42,7 @@ public:
 	Server(int port);
 	~Server();
 
-	static void signalHandler(int signum);
+	// static void signalHandler(int signum);
 	void		createSocket();
 	void 		loop();
 	void		acceptNewClient();
@@ -55,9 +55,9 @@ public:
 	int			getChannelIndex(); //DEBE RETORNAR EL INDICE DEL ARRAY DEL CANAL DONDE SE HA ENVIADO EL MENSAJE
 	void 		addChannel(const std::string& channelName, const std::string& password);
 	bool 		validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password);
-  void	disconnectClient(Client *client, std::string msg);
-	void	infoAllServerClients( std::string msg );
-	Client	*getClientNickName( std::string NickName );
+  	void		disconnectClient(Client *client, std::string msg);
+	void		infoAllServerClients( std::string msg );
+	Client		*getClientNickName( std::string NickName );
 };
 
 #endif

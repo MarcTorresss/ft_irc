@@ -1,5 +1,4 @@
 #include "ircserv.hpp"
-#include "utils.cpp"
 
 void	Server::_setNickname(Client *cli, std::string& params){
 	if (params == ""){
@@ -105,6 +104,18 @@ void Server::addChannel(const std::string& channelName, const std::string& passw
     (void) password;
 }
 
+std::vector<std::string> splitString(const std::string& input, char delimiter)
+{
+    std::istringstream stream(input);
+    std::string token;
+    std::vector<std::string> ret;
+
+    while (std::getline(stream, token, delimiter))
+        ret.push_back(token);
+    
+    return ret;
+}
+
 void Server::_handleJoin(Client *cli, std::string& params)
 {
     //param format [#channel1,#channel2 key1,key2]
@@ -139,6 +150,24 @@ void Server::_handleJoin(Client *cli, std::string& params)
         //check password
             //join client
     //else addChannel
+}
+bool Server::validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password) {
+    
+    for (size_t i = 0; i < _channels.size(); i++) {
+        if (_channels[i].getName() == channelName) {
+            // If the channel exists, validate the password
+            if (_channels[i].getPass() == password) {
+                std::cout << "Password is valid for channel: " << channelName << std::endl;
+                _channels[i].addClient(cli);
+                return true;
+            } else {
+                std::cout << "Invalid password for channel: " << channelName << std::endl;
+                return false;
+            }
+        }
+    }
+    addChannel(channelName, password);
+    return true;
 }
 
 void Server::disconnectClient(Client *client, std::string msg)
