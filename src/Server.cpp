@@ -16,9 +16,7 @@ void Server::loop()
 		int	revents;
 		int pollResult = poll(&_fds[0],_fds.size(), -1);
     	if (pollResult == -1 && !serverShutdown)
-		{
         	throw std::runtime_error("The function poll() failed");
-		}
 		for (size_t i = 0; i < _fds.size(); i++)
 		{
 			revents = _fds[i].revents;
@@ -73,12 +71,10 @@ void Server::loop()
 	}
 }
 
-
 void Server::createSocket()
 {
 	struct	sockaddr_in sockAddr;
 	struct	pollfd		serPoll;
-	// struct pollfd poll_a; //;)
 
 	sockAddr.sin_family = AF_INET;
 	sockAddr.sin_port = htons(_port);
@@ -108,7 +104,6 @@ void Server::createSocket()
 
 void Server::acceptNewClient()
 {
-	// Send a basic IRC welcome message to confirm connection
 	std::cout << GRE << "NEW CLIENT" << WHI << std::endl;
 	Client cli; //-> create a new client
 	struct sockaddr_in cliSocket;//for storing IP, PORT, PROT
@@ -128,9 +123,6 @@ void Server::acceptNewClient()
 		return;
 	}
 
-    std::string welcome = ":localhost 001 " + cli.getNickName() + " :Welcome to the IRC server!\r\n";
-    send(cliFd, welcome.c_str(), welcome.size(), 0);
-	
 	newPoll.fd = cliFd; //-> add the client socket to the pollfd
 	newPoll.events = POLLIN; //-> set the event to POLLIN for reading data
 	newPoll.revents = 0; //-> set the revents to 0
@@ -140,6 +132,8 @@ void Server::acceptNewClient()
 	_clients.push_back(cli); //-> add the client to the vector of clients
 	_fds.push_back(newPoll); //-> add the client socket to the pollfd
 
+    std::string welcome = ":localhost 001 " + cli.getNickName() + " :Welcome to the IRC server!\r\n";
+    send(cliFd, welcome.c_str(), welcome.size(), 0);
 	std::cout << GRE << "Client <" << cliFd << "> Connected" << WHI << std::endl;
 }
 
@@ -165,7 +159,6 @@ void Server::clearClients(int fd){
 		if (_clients[i].getFd() == fd)
 			{_clients.erase(_clients.begin() + i); break;}
 	}
-
 }
 
 void	Server::receiveNewData(int fd)
@@ -175,7 +168,6 @@ void	Server::receiveNewData(int fd)
 	Client	*cli = getClient(fd);
 
     memset(buff, 0, BUFF_SIZE);
-
     ssize_t bytes = recv(fd, buff, BUFF_SIZE - 1, 0);
 
     if (bytes < 0)
