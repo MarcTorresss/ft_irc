@@ -134,4 +134,47 @@ void Server::_handleJoin(Client *cli, std::string& params)
         const std::string& channelKey = channelKeyPairs[i].second;
         validateChannelPassword(cli, channelName, channelKey);
     }
+    //parse channel and pass
+    //if channel exists
+        //check password
+            //join client
+    //else addChannel
+}
+
+void Server::disconnectClient(Client *client, std::string msg)
+{
+    std::string disconnect_msg = ":" + client->getNickName() + "!~" + client->getUserName() + " QUIT :" + msg + " \r\n";
+    infoAllServerClients(disconnect_msg);
+    // Iterar sobre los canales para los que el cliente está registrado
+    for (size_t i = 0; i < _channels.size(); i++)
+    {
+        if (_channels[i].isClient(client))
+        {
+			_channels[i].removeClient(client, client->getNickName());
+			// Si el canal queda vacío, lo eliminamos
+			if (_channels[i].getClients().size() == 0)
+			{
+				_channels.erase(_channels.begin() + i);
+				i--;
+			}
+			else
+            {
+                // Si no hay administradores en el canal, asignar un nuevo administrador
+                if (_channels[i].someAdmin() == 0)
+                {
+                    // Obtener el primer cliente del canal
+                    std::vector<std::string> AllClients = _channels[i].getClients();
+                    Client* newAdmin = getClientNickName(AllClients[0]);
+
+                    // Asignar el nuevo administrador
+                    _channels[i].setAdmin(newAdmin->getNickName());
+
+                    // Notificar al nuevo administrador
+                    std::string newAdminText = _channels[i].getName() + " No admins left connected/you are the new Admin \r\n";
+                    newAdmin->addBuffer(newAdminText);
+                }
+            }
+        }
+    }
+    clearClients(client->getFd());
 }

@@ -34,14 +34,9 @@ struct sockaddr_in Client::getClientAdd()
     return _clientAdd;
 }
 
-std::string Client::getSendInfo()
+std::string Client::getBuffer()
 {
-    return _sendInfo;
-}
-
-std::string Client::getReceiveInfo()
-{
-    return _receiveInfo;
+    return _buffer;
 }
 
 void Client::setUserName( std::string& userName )
@@ -69,14 +64,9 @@ void Client::setClientAdd( struct sockaddr_in& clientAdd )
     _clientAdd = clientAdd;
 }
 
-void	Client::setSendInfo( std::string sendinfo )
+void	Client::setBuffer( std::string buffer )
 {
-	_sendInfo = sendinfo;
-}
-
-void	Client::setReceiveInfo( std::string reciveinfo )
-{
-	_receiveInfo = reciveinfo;
+	_buffer = buffer;
 }
 
 void		Client::setStatus(int status){
@@ -87,10 +77,9 @@ int		Client::getStatus(){
 	return DONE; //for debug, real is: return _status;
 }
 
-int	Client::sendInfo( std::string msg )
+int	Client::sendInfo( void )
 {
-    _sendInfo = _sendInfo + msg;
-    int bytes = send(_fd, _sendInfo.c_str(), _sendInfo.length(), 0);
+    int bytes = send(_fd, _buffer.c_str(), _buffer.length(), 0);
     if (bytes == -1)
         return (std::cerr << "Error en send " << std::endl, 0);
     return 1;
@@ -108,7 +97,17 @@ int	Client::receiveInfo( void )
         if (bytes <= 0)
             return (std::cout << "Client <" << _fd << "> Disconnected or Error occurred" << std::endl, 0);
         else
-            _receiveInfo += std::string(buff);
+            _buffer += std::string(buff);
     }
     return 1;
+}
+
+void	Client::addBuffer( std::string msg )
+{
+    _buffer = _buffer + msg;
+}
+
+void	Client::cleanBuffer( void )
+{
+    _buffer.clear();
 }

@@ -32,6 +32,16 @@ void	Channel::addAdmin( Client *client, std::string target )
 	_admins.push_back(target);
 }
 
+void	Channel::setAdmin( std::string NickName )
+{
+	_admins.push_back(NickName);
+}
+
+int		Channel::someAdmin( void )
+{
+	return _admins.size();
+}
+
 void	Channel::removeAdmin( Client *client, std::string target )
 {
 	if (!isAdmin( client ))
@@ -153,6 +163,11 @@ void	Channel::setUserLimit( Client *client, std::string limit )
 	if (lim < 0)
 		throw std::out_of_range("User limit must be a positive int (max. 999999)");
 	_userLimit = lim;
+}
+
+std::vector< std::string >	Channel::getClients()
+{
+	return _clients;
 }
 
 void Channel::setName(std::string name){_channelName = name;}
