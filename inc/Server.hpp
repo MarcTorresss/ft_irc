@@ -36,6 +36,7 @@ private:
     void	_handleInvite(Client *cli, std::string& params);
     void	_handleTopic(Client *cli, std::string& params);
     void	_handleMode(Client *cli, std::string& params);
+	void	_handlePing(Client *cli, std::string& params);
 
 public:
 	Server();

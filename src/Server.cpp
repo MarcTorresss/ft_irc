@@ -134,7 +134,7 @@ void Server::acceptNewClient()
 	_clients.push_back(cli); //-> add the client to the vector of clients
 	_fds.push_back(newPoll); //-> add the client socket to the pollfd
 
-    std::string welcome = ":localhost 001 " + cli.getNickName() + " :Welcome to the IRC server!\r\n";
+    std::string welcome = cli.getNickName() + "Welcome to the IRC server!\r\n";
     send(cliFd, welcome.c_str(), welcome.size(), 0);
 	std::cout << GRE << "Client <" << cliFd << "> Connected" << WHI << std::endl;
 }
@@ -208,7 +208,7 @@ void	Server::check_comand( char *buff, Client *cli )
 	for (i = 0; command[i] != 0; ++i){
 		temp += (char)toupper(command[i]);}
 	command = temp;
-    std::string commands[] = { "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PASS", "QUIT" };
+    std::string commands[] = { "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PING", "PASS", "QUIT"};
     for (i = 0; i < 10; i++) {
         if (commands[i] == command)
             break;
@@ -239,10 +239,13 @@ void	Server::check_comand( char *buff, Client *cli )
         case 7: // MODE
             _handleMode(cli, params);
             break;
-        case 8: // PASS
+		case 8: // PING
+        	_handlePing(cli, params);
+            break;
+        case 9: // PASS
             //_authenticatePassword(cli, params);
             break;
-		case 9: // PASS
+		case 10: // QUIT
             //_quitChannel(cli, params);
             break;
         default:

@@ -99,6 +99,12 @@ void	Server::_handleMode(Client *cli, std::string& params){
 	}
 }
 
+void	Server::_handlePing(Client *cli, std::string& params)
+{
+    (void) params;
+    cli->addBuffer("Ping Marc Pong Albert\r\n");
+}
+
 void Server::addChannel(const std::string& channelName, const std::string& password) {
     (void) channelName;
     (void) password;
