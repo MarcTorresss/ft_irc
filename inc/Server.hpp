@@ -44,7 +44,7 @@ public:
 
 	// static void signalHandler(int signum);
 	void		createSocket();
-	void 		loop(const Server& server);
+	void 		loop();
 	void		acceptNewClient();
 	void		receiveNewData(int fd);
 	void		check_comand( char *buff, Client *cli );
@@ -53,7 +53,7 @@ public:
 	void 		closeFds();
 	void 		clearClients(int fd);
 	int			getChannelIndex(); //DEBE RETORNAR EL INDICE DEL ARRAY DEL CANAL DONDE SE HA ENVIADO EL MENSAJE
-	void 		addChannel(const std::string& channelName, const std::string& password);
+	void 		addChannel(Client *cli, const std::string& channelName, const std::string& password);
 	bool 		validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password);
   	void		disconnectClient(Client *client, std::string msg);
 	void		infoAllServerClients( std::string msg );

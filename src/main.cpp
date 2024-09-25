@@ -13,7 +13,7 @@ int main( int argc, char **argv)
 		try
 		{
 			server.createSocket();
-			server.loop(server);
+			server.loop();
 		}
 		catch(std::exception &e)
 		{

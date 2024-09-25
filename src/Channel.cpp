@@ -1,7 +1,9 @@
 #include "Channel.hpp"
 
-Channel::Channel( Client *client )
+Channel::Channel( Client *client,  std::string name, std::string pass)
 {
+	_channelName = name;
+	_channelPassword = pass;
 	_admins.push_back(client->getNickName());
 	_clients.push_back(client->getNickName());
 }

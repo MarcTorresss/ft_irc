@@ -107,9 +107,10 @@ void	Server::_handlePing(Client *cli, std::string& params)
     cli->addBuffer("Ping Marc Pong Albert and javi from munich\r\n");
 }
 
-void Server::addChannel(const std::string& channelName, const std::string& password) {
-    (void) channelName;
-    (void) password;
+void Server::addChannel(Client *cli, const std::string& channelName, const std::string& password) {
+    Channel newChannel(cli, channelName, password);
+    _channels.push_back(newChannel);
+    getChannelsList();
 }
 
 std::vector<std::string> splitString(const std::string& input, char delimiter)
@@ -175,7 +176,7 @@ bool Server::validateChannelPassword(Client *cli, const std::string& channelName
             }
         }
     }
-    addChannel(channelName, password);
+    addChannel(cli, channelName, password);
     return true;
 }
 

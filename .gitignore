@@ -4,3 +4,4 @@ ft_irc
 *.out
 *.swp
 irssi-1.4.4
+combined_code.cpp

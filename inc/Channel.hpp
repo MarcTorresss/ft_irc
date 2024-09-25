@@ -24,7 +24,7 @@ private:
 
 public:
 	Channel();
-	Channel( Client *client );
+	Channel( Client *client, std::string name, std::string pass);
 
 	~Channel();
 

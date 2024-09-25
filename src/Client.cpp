@@ -109,6 +109,6 @@ void	Client::addBuffer( std::string msg )
 
 void	Client::cleanBuffer( void )
 {
-    std::cout << "aaaaaa" << std::endl;
+    std::cout << "Buffer Cleaned" << std::endl;
     _buffer.clear();
 }

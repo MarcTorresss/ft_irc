@@ -9,7 +9,7 @@ Server::Server(int port): _serSocketFd(-1), _port(port){
 Server::~Server(){
 }
 
-void Server::loop(const Server& server)
+void Server::loop()
 {
 	while (!serverShutdown)
 	{
@@ -40,7 +40,6 @@ void Server::loop(const Server& server)
 					else // Mensaje de un cliente existente.
 					{
 						receiveNewData(_fds[i].fd);
-						server.getChannelsList();
 					}
 					// Marcar todos los fds como listos para escribir.
 					for (size_t j = 1; j < _fds.size(); j++) 
