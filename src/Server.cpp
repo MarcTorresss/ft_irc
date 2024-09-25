@@ -9,7 +9,7 @@ Server::Server(int port): _serSocketFd(-1), _port(port){
 Server::~Server(){
 }
 
-void Server::loop()
+void Server::loop(const Server& server)
 {
 	while (!serverShutdown)
 	{
@@ -40,6 +40,7 @@ void Server::loop()
 					else // Mensaje de un cliente existente.
 					{
 						receiveNewData(_fds[i].fd);
+						server.getChannelsList();
 					}
 					// Marcar todos los fds como listos para escribir.
 					for (size_t j = 1; j < _fds.size(); j++) 
@@ -118,6 +119,8 @@ void Server::acceptNewClient()
 		std::cout << "accept() failed" << std::endl;
 		return; //throw?
 	}
+	std::string capResponse = ":localhost CAP * LS :\r\n";
+    send(cliFd, capResponse.c_str(), capResponse.size(), 0);
 
 	if (fcntl(cliFd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option (O_NONBLOCK) for non-blocking socket
 	{
@@ -197,11 +200,12 @@ void	Server::check_comand( char *buff, Client *cli )
 	std::string receivedData(buff);
     std::istringstream iss(receivedData);
     std::string command;
-    std::string params;
+    std::string space, params;
 	std::string temp = "";
 
     // Separar el comando de los parámetros
     iss >> command;
+    std::getline(iss, space, ' ');
     std::getline(iss, params);
 
 	int i = 0;
@@ -268,4 +272,8 @@ Client	*Server::getClientNickName( std::string NickName )
 		if ((*it).getNickName() == NickName)
 			return &(*it);
 	return NULL;
+}
+
+const std::vector<Channel>& Server::getChannels() const {
+    return _channels;
 }

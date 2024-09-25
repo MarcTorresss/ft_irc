@@ -1,4 +1,6 @@
 #include "ircserv.hpp"
+#include "Server.hpp"
+#include "Channel.hpp"
 
 void	Server::_setNickname(Client *cli, std::string& params){
 	if (params == ""){
@@ -127,25 +129,26 @@ void Server::_handleJoin(Client *cli, std::string& params)
     //param format [#channel1,#channel2 key1,key2]
     std::vector<std::pair<std::string, std::string> > channelKeyPairs;    std::vector<std::string> channels, keys;
     std::istringstream iss(params);
-    std::string command, channIn, keysIn;
-    iss >> command;
+    std::string channIn, keysIn;
 
     std::getline(iss, channIn, ' ');
     std::getline(iss, keysIn);
 
+    std::cout << "Channels: " << channIn << std::endl;
+    std::cout << "Keys: "<< keysIn << std::endl;
+
     if (channIn.empty() || keysIn.empty())
-        throw std::invalid_argument("Invalid JOIN format, [#channel1,#channel2] [key1,key2]");
-    
+        {std::cout << "Invalid JOIN format, [#channel1,#channel2] [key1,key2]" << std::endl; return;}
+
     channels = splitString(channIn, ',');
     keys = splitString(keysIn, ',');
 
     if (channels.size() != keys.size())
-        throw std::invalid_argument("Number of channels does not match number of keys");
-    
+        {std::cout << "Number of channels does not match number of keys" << std::endl; return;}   
     for (size_t i = 0; i < channels.size(); i++)
     {
         if (channels[i].find("#") != 0)
-            throw std::invalid_argument("Invalid channel format. Channels must start with '#'.");
+            {std::cout << "Invalid channel format. Channels must start with '#'." << std::endl; return;}
         channelKeyPairs.push_back(std::make_pair(channels[i], keys[i]));
         const std::string& channelName = channelKeyPairs[i].first;
         const std::string& channelKey = channelKeyPairs[i].second;

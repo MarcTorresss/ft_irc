@@ -39,9 +39,9 @@ public:
 	void	removeInvite( Client *client, std::string target );
 	void	removeClient(Client *client, std::string target);
 
-	std::string getName();
-	std::string getTopic();
-	std::string getPass();
+	std::string getName() const;
+	std::string getTopic() const;
+	std::string getPass() const;
 
 	void setUserLimit( Client *client, std::string limit );
 	void setName(std::string name);

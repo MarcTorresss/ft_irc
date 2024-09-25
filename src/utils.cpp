@@ -1,4 +1,5 @@
 #include "ircserv.hpp"
+#include "Server.hpp"
 
 void signalHandler(int signum) {
 	(void)signum;
@@ -44,3 +45,19 @@ int check_arguments(int argc, char **argv) {
 	return 0;
 }
 
+void Server::getChannelsList() const {
+	
+	const std::vector<Channel>& channels = getChannels();
+
+    if (channels.empty()) {
+        std::cout << "No channels available." << std::endl;
+        return;
+    }
+
+    std::cout << "List of Channels: " << std::endl;
+    for (size_t i = 0; i < channels.size(); ++i) {
+        std::cout << "Channel " << i + 1 << ": " << std::endl;
+        std::cout << "  Name: " << channels[i].getName() << std::endl;
+        std::cout << "  Password: " << (channels[i].getPass().empty() ? "No password" : channels[i].getPass()) << std::endl;
+    }
+}

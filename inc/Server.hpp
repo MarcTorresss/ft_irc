@@ -11,7 +11,6 @@
 
 class Channel;
 class Client;
-class Channel;
 
 class Server
 {
@@ -45,7 +44,7 @@ public:
 
 	// static void signalHandler(int signum);
 	void		createSocket();
-	void 		loop();
+	void 		loop(const Server& server);
 	void		acceptNewClient();
 	void		receiveNewData(int fd);
 	void		check_comand( char *buff, Client *cli );
@@ -59,6 +58,10 @@ public:
   	void		disconnectClient(Client *client, std::string msg);
 	void		infoAllServerClients( std::string msg );
 	Client		*getClientNickName( std::string NickName );
+
+	//Debugging
+	const std::vector<Channel>& getChannels() const;
+	void getChannelsList() const;
 };
 
 #endif

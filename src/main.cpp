@@ -13,11 +13,11 @@ int main( int argc, char **argv)
 		try
 		{
 			server.createSocket();
-			server.loop();
+			server.loop(server);
 		}
 		catch(std::exception &e)
 		{
-			std::cout << "Exception caught" << e.what() << std::endl;
+			std::cout << "Exception caught: " << e.what() << std::endl;
 		}
 	}
 	else
