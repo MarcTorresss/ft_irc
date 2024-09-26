@@ -21,8 +21,8 @@ void	Channel::addClient( Client *client )
 {
 	if (_clients.size() >= _userLimit)
 		throw std::runtime_error("Channel is full!");
-	if (_inviteOnly && !isInvite(client))
-		throw std::runtime_error("User was not invited");
+	/*if (_inviteOnly && !isInvite(client))
+		throw std::runtime_error("");*/
 	_clients.push_back(client->getNickName());
 }
 
@@ -138,9 +138,10 @@ void Channel::setTopicAdmin(Client *client){
 }
 
 void Channel::setInviteOnly(Client *client){
-	if (!isAdmin( client ))
+	/*if (!isAdmin( client ))
 		throw std::runtime_error("Not admin");
-	_inviteOnly = !_inviteOnly;
+	_inviteOnly = !_inviteOnly;*/
+	(void) client;
 }
 
 void	Channel::setPassword( Client *client, std::string pswd )

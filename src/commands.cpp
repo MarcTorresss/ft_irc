@@ -2,13 +2,16 @@
 #include "Server.hpp"
 #include "Channel.hpp"
 
-void	Server::_setNickname(Client *cli, std::string& params){
-	if (params == ""){
+void	Server::_setNickname(Client *cli, std::vector<std::string> params){
+	// NO PUEDEN AVER NICKS REPETIDOS
+	if (params.empty())
+	{
+		// cli->setNickName(params[0]);
 		std::cout << "client " << cli->getFd() << " NICK is: " << cli->getNickName() << "-" << std::endl;
 	}
 	if (cli->getStatus() >= PASS){
 		std::cout << "NICK changed" << std::endl;
-		cli->setNickName(params);
+		cli->setNickName(params[0]);
 	}
 	else{
 		std::cout << ERR << "cannot change nick if password is not set" << std::endl;
@@ -17,13 +20,13 @@ void	Server::_setNickname(Client *cli, std::string& params){
 	cli->nextStatus();
 }
 
-void	Server::_setUser(Client *cli, std::string& params){
-	if (params == ""){
+void	Server::_setUser(Client *cli, std::vector<std::string> params){
+	if (params.empty()){
 		std::cout << "client <" << cli->getFd() << "> USR is: " << cli->getUserName() << "-" << std::endl;
 	}
 	if (cli->getStatus() >= NICK){
 		std::cout << "USR changed" << std::endl;
-		cli->setUserName(params);
+		cli->setUserName(params[0]);
 	}
 	else{
 		std::cout << ERR << "cannot change username if nickname is not set" << std::endl;
@@ -32,18 +35,7 @@ void	Server::_setUser(Client *cli, std::string& params){
 	cli->nextStatus();
 }
 
-void	Server::joinChannel(Client *cli, std::string& params){
-	(void) cli;
-	(void) params;
-	std::cout << "client <" << cli->getFd() << "> wants to join channel " << params << std::endl;
-	for (int i = 0; _channels.size(); ++i){
-		if (_channels[i].getName() == params)
-			_channels[i].addClient(cli);//join channel + check channel perms (password, invite only, has been invited?)
-	}
-	//else create channel
-}
-
-void	Server::_handlePrivmsg(Client *cli, std::string& params){
+void	Server::_handlePrivmsg(Client *cli, std::vector<std::string> params){
 	(void) cli;
 	(void) params;
 	if (cli->getStatus() != DONE)
@@ -57,7 +49,7 @@ void	Server::_handlePrivmsg(Client *cli, std::string& params){
 	}
 }
 
-void	Server::_handleKick(Client *cli, std::string& params){
+void	Server::_handleKick(Client *cli, std::vector<std::string> params){
 	if (cli->getStatus() != DONE)
 	{
 		std::cout << "User not registred!" <<std::endl; 
@@ -66,11 +58,11 @@ void	Server::_handleKick(Client *cli, std::string& params){
 	else
 	{
 		int channelIdx = getChannelIndex();
-		_channels[channelIdx].removeClient(cli, params);
+		_channels[channelIdx].removeClient(cli, params[0]);
 	}
 }
 
-void	Server::_handleInvite(Client *cli, std::string& params){
+void	Server::_handleInvite(Client *cli, std::vector<std::string> params){
 	if (cli->getStatus() != DONE)
 	{
 		std::cout << "User not registred!" <<std::endl; 
@@ -80,12 +72,12 @@ void	Server::_handleInvite(Client *cli, std::string& params){
 	{
 		int channelIdx = getChannelIndex();
 		//does the client need to be connected to server to be invited??
-		_channels[channelIdx].addInvite(cli, params);
+		_channels[channelIdx].addInvite(cli, params[0]);
 		//2. notify user?
 	}
 }
 
-void	Server::_handleTopic(Client *cli, std::string& params){
+void	Server::_handleTopic(Client *cli, std::vector<std::string> params){
 	if (cli->getStatus() != DONE)
 	{
 		std::cout << "User not registred!" <<std::endl; 
@@ -94,25 +86,29 @@ void	Server::_handleTopic(Client *cli, std::string& params){
 	else
 	{	
 		int channelIdx = getChannelIndex();
-		_channels[channelIdx].setTopic(cli, params);
+		_channels[channelIdx].setTopic(cli, params[0]);
 	}
 }
 
-void	Server::_handleMode(Client *cli, std::string& params){
-	if (cli->getStatus() != DONE)
+void	Server::_handleMode(Client *cli, std::vector<std::string> params){
+	/*if (cli->getStatus() != DONE)
 	{
 		std::cout << "User not registred!" <<std::endl; 
 		cli->addBuffer("User not registred!\r\n");
 	}
 	else
-	{
-		if (params == ""){
+	{*/
+		if (params.empty()){
 			std::cout << "the current channel modes are [" << "]" <<std::endl; //print los channel modes
 		}
-		std::string modes[] = {"i","t","k","o","l"};
+		std::string modes[] = {"+i","t","k","o","l"};
 		int i = 0;
 		for (i = 0; i < 5; ++i){
-			if (modes[i] == params)
+			// std::cout << params[params.size() - 1] << std::endl;
+			// for (size_t i = 0; i < params.size(); ++i) {
+			// 	std::cout << "Param " << i << ": " << params[i] << std::endl;
+			// }
+			if (modes[i] == params[params.size() - 1])
 				break;
 		}
 		try{
@@ -125,13 +121,13 @@ void	Server::_handleMode(Client *cli, std::string& params){
 					_channels[0].setTopicAdmin(cli);
 					break;
 				case 2: //k
-					_channels[0].setPassword(cli,params);
+					_channels[0].setPassword(cli,params[0]);
 					break;
 				case 3: //o
-					_channels[0].addAdmin(cli,params);
+					_channels[0].addAdmin(cli,params[0]);
 					break;
 				case 4: //l
-					_channels[0].setUserLimit(cli,params);
+					_channels[0].setUserLimit(cli,params[0]);
 					break;
 				default:
 					std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
@@ -140,10 +136,10 @@ void	Server::_handleMode(Client *cli, std::string& params){
 		}catch(std::exception &e){
 			std::cout << ERR << e.what() <<std::endl;
 		}
-	}
+	//}
 }
 
-void	Server::_handlePing(Client *cli, std::string& params)
+void	Server::_handlePing(Client *cli, std::vector<std::string> params)
 {
     (void) params;
 	if (cli->getStatus() != DONE)
@@ -175,7 +171,7 @@ std::vector<std::string> splitString(const std::string& input, char delimiter)
     return ret;
 }
 
-void Server::_handleJoin(Client *cli, std::string& params)
+void Server::_handleJoin(Client *cli, std::vector<std::string> params)
 {
 	if (cli->getStatus() != DONE)
 	{
@@ -186,7 +182,7 @@ void Server::_handleJoin(Client *cli, std::string& params)
 	{
 		//param format [#channel1,#channel2 key1,key2]
 		std::vector<std::pair<std::string, std::string> > channelKeyPairs;    std::vector<std::string> channels, keys;
-		std::istringstream iss(params);
+		std::istringstream iss(params[0]);
 		std::string channIn, keysIn;
 
 		std::getline(iss, channIn, ' ');
@@ -223,9 +219,15 @@ void Server::_handleJoin(Client *cli, std::string& params)
 	}
 }
 
-void Server::_authenticatePassword(Client *cli, std::string& params)
+void Server::_authenticatePassword(Client *cli, std::vector<std::string> params)
 {
 	cli->nextStatus();
+	(void) params;
+}
+
+void	Server::_handleWhoIs(Client *cli, std::vector<std::string> params)
+{
+	(void) cli;
 	(void) params;
 }
 
@@ -286,4 +288,17 @@ void Server::disconnectClient(Client *client, std::string msg)
         }
     }
     clearClients(client->getFd());
+}
+
+void Server::handleConnection(Client *client)
+{
+	std::string serverName = "MyIRC";
+	std::string version = "1.0";
+    // Enviar mensaje de bienvenida a Irssi
+	std::string welcomeMessage = ":" + serverName + " 001 " + client->getNickName() + " :Welcome to the " + serverName + " IRC Network, " + client->getNickName() + "\r\n";
+	client->addBuffer(welcomeMessage);
+
+	// Enviar información sobre el servidor
+	std::string versionMessage = ":" + serverName + " 002 " + client->getNickName() + " :Your host is " + serverName + ", running version " + version + "\r\n";
+    client->addBuffer(versionMessage);
 }

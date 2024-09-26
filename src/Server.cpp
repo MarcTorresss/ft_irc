@@ -136,8 +136,8 @@ void Server::acceptNewClient()
 	_clients.push_back(cli); //-> add the client to the vector of clients
 	_fds.push_back(newPoll); //-> add the client socket to the pollfd
 
-    std::string welcome = cli.getNickName() + "Welcome to the IRC server!\r\n";
-    send(cliFd, welcome.c_str(), welcome.size(), 0);
+    // std::string welcome = cli.getNickName() + "Welcome to the IRC server!\r\n";
+    // send(cliFd, welcome.c_str(), welcome.size(), 0);
 	std::cout << GRE << "Client <" << cliFd << "> Connected" << WHI << std::endl;
 }
 
@@ -199,63 +199,128 @@ void	Server::check_comand( char *buff, Client *cli )
 	std::string receivedData(buff);
     std::istringstream iss(receivedData);
     std::string command;
-    std::string space, params;
+    std::string space;
+	std::vector<std::string> params;
 	std::string temp = "";
 
-    // Separar el comando de los parámetros
-    iss >> command;
-    std::getline(iss, space, ' ');
-    std::getline(iss, params);
+	if (receivedData.find(std::string("\r\n")) != std::string::npos
+		|| receivedData.find(std::string("\n")) != std::string::npos)
+	{
+		// Este bucle procesa las líneas de mensajes desde el cliente.
+		while (!receivedData.empty())
+		{
+			std::cout << "The data:" << receivedData << "." << std::endl;
+			// Buscar el delimitador de fin de línea
+			size_t pos = receivedData.find("\r\n");
+			std::string sms;
 
-	int i = 0;
-	for (i = 0; command[i] != 0; ++i){
-		temp += (char)toupper(command[i]);}
-	command = temp;
-    std::string commands[] = { "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PING", "PASS", "QUIT"};
-    for (i = 0; i < 10; i++) {
-        if (commands[i] == command)
-            break;
-    }
-    switch (i)
-    {
-        case 0: // NICK
-            _setNickname(cli, params);
-            break;
-        case 1: // USER
-            _setUser(cli, params);
-            break;
-        case 2: // JOIN
-            _handleJoin(cli, params);
-            break;
-        case 3: // PRIVMSG
-            _handlePrivmsg(cli, params);
-            break;
-        case 4: // KICK
-            _handleKick(cli, params);
-            break;
-        case 5: // INVITE
-            _handleInvite(cli, params);
-            break;
-        case 6: // TOPIC
-            _handleTopic(cli, params);
-            break;
-        case 7: // MODE
-            _handleMode(cli, params);
-            break;
-		case 8: // PING
-        	_handlePing(cli, params);
-            break;
-        case 9: // PASS
-        	_authenticatePassword(cli, params);
-            break;
-		case 10: // QUIT
-            //_quitChannel(cli, params);
-            break;
-        default:
-			cli->addBuffer(ERR_UNKCMD421);
-            std::cout << "Comando no reconocido: " << command << std::endl;
-            break;
+			// Si se encuentra el delimitador, extraer el mensaje
+			if (pos != std::string::npos)
+			{
+				sms = receivedData.substr(0, pos);
+				receivedData.erase(0, pos + 2); //Eliminamos mansaje de la linia
+			}
+			else
+			{
+				// Si no se encuentra el delimitador, se asume que queda un mensaje parcial
+				sms = receivedData; 
+				receivedData = ""; // Limpiar la línea para salir del bucle
+			}
+
+			// std::cout << "Msg from " << cli->getNickName() << "😈😈😈😈😈"  << ": " << sms << std::endl;
+			params.clear();
+			std::istringstream iss(sms);
+			std::string token, command;
+
+			if (sms[0] == ':')
+			{
+				iss >> token; // Ignorar el prefijo (si existe)
+			}
+
+			// Leer el comando principal
+			iss >> command;
+
+			while (iss >> token)
+			{
+				// Si el token comienza con ':', se trata de un "trailing"
+				if (token[0] == ':')
+				{
+					std::string trailing;
+					std::getline(iss, trailing); // Leer el resto de la línea
+					params.push_back(token.substr(1) + trailing); // Agregar el "trailing" sin el ':'
+					break; // Salir del bucle al encontrar el "trailing"
+				}
+				else
+				{
+					std::cout << "The data:" << token << "." << std::endl;
+					params.push_back(token); // Agregar el token a los parámetros
+				}
+			}
+			if (!params.empty())
+			{
+				std::string& lastParam = params[params.size() - 1]; // Obtener una referencia al último parámetro
+
+				// Verificar si el último parámetro no está vacío y termina con '\r'
+				if (!lastParam.empty() && lastParam[lastParam.size() - 1] == '\r')
+				{
+					lastParam.resize(lastParam.size() - 1); // Eliminar el último carácter
+				}
+			}
+			int i = 0;
+			for (i = 0; command[i] != 0; ++i){
+				temp += (char)toupper(command[i]);}
+			command = temp;
+			std::string commands[] = { "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PING", "PASS", "WHOIS", "QUIT"};
+			for (i = 0; i < 10; i++) {
+				if (commands[i] == command)
+					break;
+			}
+			switch (i)
+			{
+				case 0: // NICK
+					_setNickname(cli, params);
+					break;
+				case 1: // USER
+					_setUser(cli, params);
+					break;
+				case 2: // JOIN
+					_handleJoin(cli, params);
+					break;
+				case 3: // PRIVMSG
+					_handlePrivmsg(cli, params);
+					break;
+				case 4: // KICK
+					_handleKick(cli, params);
+					break;
+				case 5: // INVITE
+					_handleInvite(cli, params);
+					break;
+				case 6: // TOPIC
+					_handleTopic(cli, params);
+					break;
+				case 7: // MODE
+					_handleMode(cli, params);
+					break;
+				case 8: // PING
+					_handlePing(cli, params);
+					break;
+				case 9: // PASS
+					_authenticatePassword(cli, params);
+					break;
+				case 10: // WHOIS
+					_handleWhoIs(cli, params);
+					break;
+				// case 11: // QUIT
+					//_quitChannel(cli, params);
+					// break;
+				default:
+					cli->addBuffer(ERR_UNKCMD421);
+					std::cout << "Comando no reconocido: " << command << std::endl;
+					break;
+			}
+		}
 	}
+	handleConnection(cli);
 }
 
 void Server::infoAllServerClients( std::string msg )

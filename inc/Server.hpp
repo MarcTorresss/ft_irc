@@ -23,19 +23,20 @@ private:
 
     Client* getClient(int fd);
 
-	void	_authenticatePassword(Client *cli, std::string& params);
-    void	_setNickname(Client *cli, std::string& params);
-    void	_setUser(Client *cli, std::string& params);
-    void	_sendPing(Client *cli, std::string& params);
-    void	_handleCapabilities(Client *cli, std::string& params);
-    void	_handleQuit(Client *cli, std::string& params);
-    void	_handleJoin(Client *cli, std::string& params);
-    void	_handlePrivmsg(Client *cli, std::string& params);
-    void	_handleKick(Client *cli, std::string& params);
-    void	_handleInvite(Client *cli, std::string& params);
-    void	_handleTopic(Client *cli, std::string& params);
-    void	_handleMode(Client *cli, std::string& params);
-	void	_handlePing(Client *cli, std::string& params);
+	void	_authenticatePassword(Client *cli, std::vector<std::string> params);
+    void	_setNickname(Client *cli, std::vector<std::string> params);
+    void	_setUser(Client *cli, std::vector<std::string> params);
+    void	_sendPing(Client *cli, std::vector<std::string> params);
+    void	_handleCapabilities(Client *cli, std::vector<std::string> params);
+    void	_handleQuit(Client *cli, std::vector<std::string> params);
+    void	_handleJoin(Client *cli, std::vector<std::string> params);
+    void	_handlePrivmsg(Client *cli, std::vector<std::string> params);
+    void	_handleKick(Client *cli, std::vector<std::string> params);
+    void	_handleInvite(Client *cli, std::vector<std::string> params);
+    void	_handleTopic(Client *cli, std::vector<std::string> params);
+    void	_handleMode(Client *cli, std::vector<std::string> params);
+	void	_handlePing(Client *cli, std::vector<std::string> params);
+	void	_handleWhoIs(Client *cli, std::vector<std::string> params);
 
 public:
 	Server();
@@ -48,7 +49,6 @@ public:
 	void		acceptNewClient();
 	void		receiveNewData(int fd);
 	void		check_comand( char *buff, Client *cli );
-	void		joinChannel(Client *cli, std::string& params);
 
 	void 		closeFds();
 	void 		clearClients(int fd);
@@ -58,6 +58,7 @@ public:
   	void		disconnectClient(Client *client, std::string msg);
 	void		infoAllServerClients( std::string msg );
 	Client		*getClientNickName( std::string NickName );
+	void		handleConnection(Client *client);
 
 	//Debugging
 	const std::vector<Channel>& getChannels() const;
