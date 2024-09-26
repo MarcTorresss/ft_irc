@@ -32,6 +32,7 @@ void	Server::_setUser(Client *cli, std::vector<std::string> params){
 		std::cout << ERR << "cannot change username if nickname is not set" << std::endl;
 		//send err message to client
 	}
+	handleConnection(cli);
 	cli->nextStatus();
 }
 
@@ -98,6 +99,11 @@ void	Server::_handleMode(Client *cli, std::vector<std::string> params){
 	}
 	else
 	{*/
+		for (size_t i = 0; i < params.size(); ++i) {
+			std::cout << "Param " << i << ": " << params[i] << std::endl;
+		}
+		std::string type = params[params.size() - 1];
+		std::cout << type << std::endl;
 		if (params.empty()){
 			std::cout << "the current channel modes are [" << "]" <<std::endl; //print los channel modes
 		}
@@ -108,7 +114,9 @@ void	Server::_handleMode(Client *cli, std::vector<std::string> params){
 			// for (size_t i = 0; i < params.size(); ++i) {
 			// 	std::cout << "Param " << i << ": " << params[i] << std::endl;
 			// }
-			if (modes[i] == params[params.size() - 1])
+			// if (modes[i] == params[params.size() - 1])
+			// 	break;
+			if (modes[i] == type)
 				break;
 		}
 		try{
@@ -149,6 +157,7 @@ void	Server::_handlePing(Client *cli, std::vector<std::string> params)
 	}
 	else
 	{
+		std::cout << "test" << std::endl;
     	cli->addBuffer("Ping Marc Pong Albert and javi from munich\r\n");
 	}
 }

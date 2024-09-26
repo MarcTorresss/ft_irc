@@ -252,7 +252,7 @@ void	Server::check_comand( char *buff, Client *cli )
 				}
 				else
 				{
-					std::cout << "The data:" << token << "." << std::endl;
+					// std::cout << "The data:" << token << "." << std::endl;
 					params.push_back(token); // Agregar el token a los parámetros
 				}
 			}
@@ -270,6 +270,7 @@ void	Server::check_comand( char *buff, Client *cli )
 			for (i = 0; command[i] != 0; ++i){
 				temp += (char)toupper(command[i]);}
 			command = temp;
+			temp.clear();
 			std::string commands[] = { "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PING", "PASS", "WHOIS", "QUIT"};
 			for (i = 0; i < 10; i++) {
 				if (commands[i] == command)
@@ -320,7 +321,6 @@ void	Server::check_comand( char *buff, Client *cli )
 			}
 		}
 	}
-	handleConnection(cli);
 }
 
 void Server::infoAllServerClients( std::string msg )
