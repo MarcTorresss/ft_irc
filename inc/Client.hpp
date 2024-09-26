@@ -37,6 +37,7 @@ public:
 	int		getStatus();
 	void	addBuffer( std::string msg );
 	void	cleanBuffer( void );
+	void	nextStatus( void );
 };
 
 #endif

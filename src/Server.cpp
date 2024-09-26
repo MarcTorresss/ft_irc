@@ -118,8 +118,8 @@ void Server::acceptNewClient()
 		std::cout << "accept() failed" << std::endl;
 		return; //throw?
 	}
-	std::string capResponse = ":localhost CAP * LS :\r\n";
-    send(cliFd, capResponse.c_str(), capResponse.size(), 0);
+	// std::string capResponse = ":localhost CAP * LS :\r\n";
+    // send(cliFd, capResponse.c_str(), capResponse.size(), 0);
 
 	if (fcntl(cliFd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option (O_NONBLOCK) for non-blocking socket
 	{
@@ -246,7 +246,7 @@ void	Server::check_comand( char *buff, Client *cli )
         	_handlePing(cli, params);
             break;
         case 9: // PASS
-            //_authenticatePassword(cli, params);
+        	_authenticatePassword(cli, params);
             break;
 		case 10: // QUIT
             //_quitChannel(cli, params);

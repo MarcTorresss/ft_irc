@@ -1,9 +1,9 @@
 #include "Client.hpp"
 
-Client::Client(): _fd(-1), _ipAdd(""){
+Client::Client(): _fd(-1), _status(0), _ipAdd(""){
 }
 
-Client::Client(int fd, std::string ipadd): _fd(fd), _ipAdd(ipadd){
+Client::Client(int fd, std::string ipadd): _fd(fd), _status(0), _ipAdd(ipadd){
 }
 
 Client::~Client(){
@@ -73,8 +73,24 @@ void		Client::setStatus(int status){
 	_status = status;
 }
 
+void    Client::nextStatus()
+{
+    if (_status == PASS)
+    {
+        _status = NICK;
+    }
+    else if (_status == NICK)
+    {
+        _status = USER;
+    }
+    else if (_status == USER)
+    {
+        _status = DONE;
+    }
+}
+
 int		Client::getStatus(){
-	return DONE; //for debug, real is: return _status;
+	return _status;
 }
 
 int	Client::sendInfo( void )
@@ -109,6 +125,6 @@ void	Client::addBuffer( std::string msg )
 
 void	Client::cleanBuffer( void )
 {
-    std::cout << "Buffer Cleaned" << std::endl;
+    // std::cout << "Buffer Cleaned" << std::endl;
     _buffer.clear();
 }

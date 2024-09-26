@@ -2,6 +2,7 @@
 
 Channel::Channel( Client *client,  std::string name, std::string pass)
 {
+	_userLimit = 5;
 	_channelName = name;
 	_channelPassword = pass;
 	_admins.push_back(client->getNickName());

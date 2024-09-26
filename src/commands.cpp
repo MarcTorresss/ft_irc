@@ -14,6 +14,7 @@ void	Server::_setNickname(Client *cli, std::string& params){
 		std::cout << ERR << "cannot change nick if password is not set" << std::endl;
 		//send message to client
 	}
+	cli->nextStatus();
 }
 
 void	Server::_setUser(Client *cli, std::string& params){
@@ -28,6 +29,7 @@ void	Server::_setUser(Client *cli, std::string& params){
 		std::cout << ERR << "cannot change username if nickname is not set" << std::endl;
 		//send err message to client
 	}
+	cli->nextStatus();
 }
 
 void	Server::joinChannel(Client *cli, std::string& params){
@@ -44,67 +46,115 @@ void	Server::joinChannel(Client *cli, std::string& params){
 void	Server::_handlePrivmsg(Client *cli, std::string& params){
 	(void) cli;
 	(void) params;
-	//create a private(invite only) channel between 2 clients
+	if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
+	}
+	else
+	{
+		//create a private(invite only) channel between 2 clients
+	}
 }
 
 void	Server::_handleKick(Client *cli, std::string& params){
-	int channelIdx = getChannelIndex();
-	_channels[channelIdx].removeClient(cli, params);
+	if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
+	}
+	else
+	{
+		int channelIdx = getChannelIndex();
+		_channels[channelIdx].removeClient(cli, params);
+	}
 }
 
 void	Server::_handleInvite(Client *cli, std::string& params){
-	int channelIdx = getChannelIndex();
-	//does the client need to be connected to server to be invited??
-	_channels[channelIdx].addInvite(cli, params);
-	//2. notify user?
+	if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
+	}
+	else
+	{
+		int channelIdx = getChannelIndex();
+		//does the client need to be connected to server to be invited??
+		_channels[channelIdx].addInvite(cli, params);
+		//2. notify user?
+	}
 }
 
 void	Server::_handleTopic(Client *cli, std::string& params){
-	int channelIdx = getChannelIndex();
-	_channels[channelIdx].setTopic(cli, params);
+	if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
+	}
+	else
+	{	
+		int channelIdx = getChannelIndex();
+		_channels[channelIdx].setTopic(cli, params);
+	}
 }
 
 void	Server::_handleMode(Client *cli, std::string& params){
-	if (params == ""){
-		std::cout << "the current channel modes are [" << "]" <<std::endl; //print los channel modes
+	if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
 	}
-	std::string modes[] = {"i","t","k","o","l"};
-	int i = 0;
-	for (i = 0; i < 5; ++i){
-		if (modes[i] == params)
-			break;
-	}
-	try{
-		switch (i) //DONE
-		{
-			case 0: //i
-				_channels[0].setInviteOnly(cli);
-				break;
-			case 1: //t
-				_channels[0].setTopicAdmin(cli);
-				break;
-			case 2: //k
-				_channels[0].setPassword(cli,params);
-				break;
-			case 3: //o
-				_channels[0].addAdmin(cli,params);
-				break;
-			case 4: //l
-				_channels[0].setUserLimit(cli,params);
-				break;
-			default:
-				std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
+	else
+	{
+		if (params == ""){
+			std::cout << "the current channel modes are [" << "]" <<std::endl; //print los channel modes
+		}
+		std::string modes[] = {"i","t","k","o","l"};
+		int i = 0;
+		for (i = 0; i < 5; ++i){
+			if (modes[i] == params)
 				break;
 		}
-	}catch(std::exception &e){
-		std::cout << ERR << e.what() <<std::endl;
+		try{
+			switch (i) //DONE
+			{
+				case 0: //i
+					_channels[0].setInviteOnly(cli);
+					break;
+				case 1: //t
+					_channels[0].setTopicAdmin(cli);
+					break;
+				case 2: //k
+					_channels[0].setPassword(cli,params);
+					break;
+				case 3: //o
+					_channels[0].addAdmin(cli,params);
+					break;
+				case 4: //l
+					_channels[0].setUserLimit(cli,params);
+					break;
+				default:
+					std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
+					break;
+			}
+		}catch(std::exception &e){
+			std::cout << ERR << e.what() <<std::endl;
+		}
 	}
 }
 
 void	Server::_handlePing(Client *cli, std::string& params)
 {
     (void) params;
-    cli->addBuffer("Ping Marc Pong Albert and javi from munich\r\n");
+	if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
+	}
+	else
+	{
+    	cli->addBuffer("Ping Marc Pong Albert and javi from munich\r\n");
+	}
 }
 
 void Server::addChannel(Client *cli, const std::string& channelName, const std::string& password) {
@@ -127,40 +177,58 @@ std::vector<std::string> splitString(const std::string& input, char delimiter)
 
 void Server::_handleJoin(Client *cli, std::string& params)
 {
-    //param format [#channel1,#channel2 key1,key2]
-    std::vector<std::pair<std::string, std::string> > channelKeyPairs;    std::vector<std::string> channels, keys;
-    std::istringstream iss(params);
-    std::string channIn, keysIn;
+	if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
+	}
+	else
+	{
+		//param format [#channel1,#channel2 key1,key2]
+		std::vector<std::pair<std::string, std::string> > channelKeyPairs;    std::vector<std::string> channels, keys;
+		std::istringstream iss(params);
+		std::string channIn, keysIn;
 
-    std::getline(iss, channIn, ' ');
-    std::getline(iss, keysIn);
+		std::getline(iss, channIn, ' ');
+		std::getline(iss, keysIn);
 
-    std::cout << "Channels: " << channIn << std::endl;
-    std::cout << "Keys: "<< keysIn << std::endl;
+		std::cout << "Channels: " << channIn << std::endl;
+		std::cout << "Keys: "<< keysIn << std::endl;
 
-    if (channIn.empty() || keysIn.empty())
-        {std::cout << "Invalid JOIN format, [#channel1,#channel2] [key1,key2]" << std::endl; return;}
+		if (channIn.empty() || keysIn.empty())
+		{
+			std::cout << "Invalid JOIN format, #channel key or [#channel1,#channel2] [key1,key2]" << std::endl;
+			cli->addBuffer("Invalid JOIN format, #channel key or [#channel1,#channel2] [key1,key2]\r\n");
+			return;
+		}
+		channels = splitString(channIn, ',');
+		keys = splitString(keysIn, ',');
 
-    channels = splitString(channIn, ',');
-    keys = splitString(keysIn, ',');
-
-    if (channels.size() != keys.size())
-        {std::cout << "Number of channels does not match number of keys" << std::endl; return;}   
-    for (size_t i = 0; i < channels.size(); i++)
-    {
-        if (channels[i].find("#") != 0)
-            {std::cout << "Invalid channel format. Channels must start with '#'." << std::endl; return;}
-        channelKeyPairs.push_back(std::make_pair(channels[i], keys[i]));
-        const std::string& channelName = channelKeyPairs[i].first;
-        const std::string& channelKey = channelKeyPairs[i].second;
-        validateChannelPassword(cli, channelName, channelKey);
-    }
-    //parse channel and pass
-    //if channel exists
-        //check password
-            //join client
-    //else addChannel
+		if (channels.size() != keys.size())
+			{std::cout << "Number of channels does not match number of keys" << std::endl; return;}   
+		for (size_t i = 0; i < channels.size(); i++)
+		{
+			if (channels[i].find("#") != 0)
+				{std::cout << "Invalid channel format. Channels must start with '#'." << std::endl; return;}
+			channelKeyPairs.push_back(std::make_pair(channels[i], keys[i]));
+			const std::string& channelName = channelKeyPairs[i].first;
+			const std::string& channelKey = channelKeyPairs[i].second;
+			validateChannelPassword(cli, channelName, channelKey);
+		}
+		//parse channel and pass
+		//if channel exists
+			//check password
+				//join client
+		//else addChannel
+	}
 }
+
+void Server::_authenticatePassword(Client *cli, std::string& params)
+{
+	cli->nextStatus();
+	(void) params;
+}
+
 bool Server::validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password) {
     
     for (size_t i = 0; i < _channels.size(); i++) {
@@ -176,6 +244,8 @@ bool Server::validateChannelPassword(Client *cli, const std::string& channelName
             }
         }
     }
+	std::string channelAdded = "Channel " + channelName + " added!\r\n";
+    send(cli->getFd(), channelAdded.c_str(), channelAdded.size(), 0);
     addChannel(cli, channelName, password);
     return true;
 }
