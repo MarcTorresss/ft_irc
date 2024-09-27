@@ -32,7 +32,7 @@ void	Server::_setUser(Client *cli, std::vector<std::string> params){
 		std::cout << ERR << "cannot change username if nickname is not set" << std::endl;
 		//send err message to client
 	}
-	handleConnection(cli);
+	handleConnection(cli); //esto no va aqui
 	cli->nextStatus();
 }
 
@@ -191,14 +191,16 @@ void Server::_handleJoin(Client *cli, std::vector<std::string> params)
 	{
 		//param format [#channel1,#channel2 key1,key2]
 		std::vector<std::pair<std::string, std::string> > channelKeyPairs;    std::vector<std::string> channels, keys;
-		std::istringstream iss(params[0]);
+		std::istringstream namechanel(params[0]);
+		std::istringstream passchanel(params[1]);
 		std::string channIn, keysIn;
 
-		std::getline(iss, channIn, ' ');
-		std::getline(iss, keysIn);
-
+		std::cout << params[0] << std::endl;
+		std::getline(namechanel, channIn, ' ');
 		std::cout << "Channels: " << channIn << std::endl;
+		std::getline(passchanel, keysIn);
 		std::cout << "Keys: "<< keysIn << std::endl;
+
 
 		if (channIn.empty() || keysIn.empty())
 		{
