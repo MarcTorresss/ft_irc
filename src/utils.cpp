@@ -7,7 +7,7 @@ void signalHandler(int signum) {
 	//std::cout << "Signal caught: " << signum << std::endl;
 }
 
-int check_arguments(int argc, char **argv) {
+int Server::check_arguments(int argc, char **argv) {
 	if (argc != 3){
 		std::cerr << ERR <<"Wrong arguments [port, password]" << WHI << std::endl;
 		return -1;

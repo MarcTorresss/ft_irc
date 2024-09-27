@@ -13,6 +13,7 @@ private:
 	std::string			_ipAdd; //-> client ip address
 	struct sockaddr_in	_clientAdd; // direccion i puerto del cliente
 	std::string			_buffer;
+	std::string			_inbuffer;
 
 public:
 	Client();
@@ -25,6 +26,9 @@ public:
 	std::string getIpAdd( void );
     struct sockaddr_in getClientAdd( void );
     std::string getBuffer( void );
+	std::string getinBuffer( void );
+	void	setinBuffer( std::string inbuffer );
+	void	addinBuffer( std::string msg );
 	void	setFd( int fd );
 	void	setIpAdd( std::string ipAdd);
 	void	setUserName( std::string& userName );
@@ -37,6 +41,7 @@ public:
 	int		getStatus();
 	void	addBuffer( std::string msg );
 	void	cleanBuffer( void );
+	void	cleaninBuffer( void );
 	void	nextStatus( void );
 };
 

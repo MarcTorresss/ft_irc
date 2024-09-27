@@ -36,18 +36,51 @@ void	Server::_setUser(Client *cli, std::vector<std::string> params){
 	cli->nextStatus();
 }
 
-void	Server::_handlePrivmsg(Client *cli, std::vector<std::string> params){
-	(void) cli;
+void	Server::_handlePrivmsg(Client *cli, std::vector<std::string> params)
+{
 	(void) params;
-	if (cli->getStatus() != DONE)
+	/*if (cli->getStatus() != DONE)
 	{
 		std::cout << "User not registred!" <<std::endl; 
 		cli->addBuffer("User not registred!\r\n");
 	}
-	else
-	{
-		//create a private(invite only) channel between 2 clients
-	}
+ 	// destinatario y mensaje
+    if (params.size() < 2)
+    {
+        cli->addBuffer(ERR_PARAM461);
+        return;
+    }
+
+    std::string target = params[0]; // El destinatario (cliente o canal)
+    std::string message = params[1]; // El mensaje (puedes unir los params si hay espacios)
+
+    // Comprobar si el destinatario es un cliente o un canal
+    if (isChannel(target))
+    {
+        // Enviar mensaje a todos los usuarios del canal
+        Channel *channel = findChannel(target);
+        if (channel)
+        {
+            channel->broadcastMessage(cli, message);
+        }
+        else
+        {
+            cli->addBuffer("401 " + target + " :No such channel\r\n");
+        }
+    }
+    else
+    {
+        // Enviar mensaje a un cliente específico
+        Client *recipient = findClient(target);
+        if (recipient)
+        {
+            recipient->addBuffer(":" + cli->getNickName() + " PRIVMSG " + target + " :" + message + "\r\n");
+        }
+        else
+        {
+            cli->addBuffer("401 " + target + " :No such nick\r\n");
+        }
+    }*/
 }
 
 void	Server::_handleKick(Client *cli, std::vector<std::string> params){
@@ -232,8 +265,22 @@ void Server::_handleJoin(Client *cli, std::vector<std::string> params)
 
 void Server::_authenticatePassword(Client *cli, std::vector<std::string> params)
 {
-	cli->nextStatus();
-	(void) params;
+	if (cli->getStatus() != PASS)
+	{
+		disconnectClient( cli, "462 * :" + params[0] + " may not reregister (need PASS state)\r\n", false );
+	}
+	else if (params[0].size() < 1)
+	{
+		cli->addBuffer("461 " + cli->getNickName() + " PASS :Parameters missing\r\n");
+	}
+	else if (params[0] != _password)
+	{
+		cli->addBuffer("464 * :Password " + params[0] + " incorrect " + _password + "\r\n");
+	}
+	else
+	{
+		cli->nextStatus();
+	}
 }
 
 void	Server::_handleWhoIs(Client *cli, std::vector<std::string> params)
@@ -263,10 +310,13 @@ bool Server::validateChannelPassword(Client *cli, const std::string& channelName
     return true;
 }
 
-void Server::disconnectClient(Client *client, std::string msg)
+void Server::disconnectClient(Client *client, std::string msg, bool sendmsg)
 {
-    std::string disconnect_msg = ":" + client->getNickName() + "!~" + client->getUserName() + " QUIT :" + msg + " \r\n";
-    infoAllServerClients(disconnect_msg);
+	if (sendmmsg)
+	{
+		std::string disconnect_msg = ":" + client->getNickName() + "!~" + client->getUserName() + " QUIT :" + msg + " \r\n";
+		infoAllServerClients(disconnect_msg);
+	}
     // Iterar sobre los canales para los que el cliente está registrado
     for (size_t i = 0; i < _channels.size(); i++)
     {

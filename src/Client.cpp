@@ -1,6 +1,6 @@
 #include "Client.hpp"
 
-Client::Client(): _fd(-1), _status(0), _ipAdd(""){
+Client::Client(): _fd(-1), _status(0), _inbuffer(""), _ipAdd(""){
 }
 
 Client::Client(int fd, std::string ipadd): _fd(fd), _status(0), _ipAdd(ipadd){
@@ -39,6 +39,11 @@ std::string Client::getBuffer()
     return _buffer;
 }
 
+std::string Client::getinBuffer()
+{
+    return _buffer;
+}
+
 void Client::setUserName( std::string& userName )
 {
     _userName = userName;
@@ -65,6 +70,11 @@ void Client::setClientAdd( struct sockaddr_in& clientAdd )
 }
 
 void	Client::setBuffer( std::string buffer )
+{
+	_buffer = buffer;
+}
+
+void	Client::setinBuffer( std::string buffer )
 {
 	_buffer = buffer;
 }
@@ -123,8 +133,19 @@ void	Client::addBuffer( std::string msg )
     _buffer = _buffer + msg;
 }
 
+void	Client::addinBuffer( std::string msg )
+{
+    _buffer = _buffer + msg;
+}
+
 void	Client::cleanBuffer( void )
 {
     // std::cout << "Buffer Cleaned" << std::endl;
     _buffer.clear();
+}
+
+void	Client::cleaninBuffer( void )
+{
+    // std::cout << "Buffer Cleaned" << std::endl;
+    _inbuffer.clear();
 }

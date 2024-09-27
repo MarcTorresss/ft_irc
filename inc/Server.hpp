@@ -20,6 +20,7 @@ private:
 	std::vector<Client> _clients;
 	std::vector<Channel> _channels;
 	std::vector<struct pollfd> _fds;
+	std::string _password; //pass del server o del cliente que te pasa
 
     Client* getClient(int fd);
 
@@ -40,7 +41,7 @@ private:
 
 public:
 	Server();
-	Server(int port);
+	Server( int port, std::string pass );
 	~Server();
 
 	// static void signalHandler(int signum);
@@ -48,17 +49,24 @@ public:
 	void 		loop();
 	void		acceptNewClient();
 	void		receiveNewData(int fd);
-	void		check_comand( char *buff, Client *cli );
+	void		check_comand(Client *cli );
 
 	void 		closeFds();
 	void 		clearClients(int fd);
 	int			getChannelIndex(); //DEBE RETORNAR EL INDICE DEL ARRAY DEL CANAL DONDE SE HA ENVIADO EL MENSAJE
 	void 		addChannel(Client *cli, const std::string& channelName, const std::string& password);
 	bool 		validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password);
-  	void		disconnectClient(Client *client, std::string msg);
+  	void		disconnectClient(Client *client, std::string msg, bool sendmsg);
 	void		infoAllServerClients( std::string msg );
 	Client		*getClientNickName( std::string NickName );
 	void		handleConnection(Client *client);
+	int			check_arguments(int argc, char **argv);
+
+	//TO DO
+	bool		isChannel( std::string nameChannel );
+	Channel		*findChannel( std::string nameChannel );
+	Client		*findClient( std::string nick );
+	void		broadcastMessage( Client cli , std::string message);
 
 	//Debugging
 	const std::vector<Channel>& getChannels() const;

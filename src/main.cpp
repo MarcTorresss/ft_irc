@@ -8,7 +8,7 @@ int main( int argc, char **argv)
 	signal(SIGQUIT, signalHandler);
 	if (check_arguments(argc, argv) == 0) 
 	{
-		Server server(atoi(argv[1]));
+		Server server(atoi(argv[1]), argv[2]);
 		
 		try
 		{

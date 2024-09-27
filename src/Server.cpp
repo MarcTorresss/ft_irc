@@ -3,7 +3,7 @@
 Server::Server(): _serSocketFd(-1), _port(4444){
 }
 
-Server::Server(int port): _serSocketFd(-1), _port(port){
+Server::Server(int port, std::string pass ): _serSocketFd(-1), _port(port), _password(pass) {
 }
 
 Server::~Server(){
@@ -60,7 +60,7 @@ void Server::loop()
 							}
 							else
 							{
-								disconnectClient(cli, std::string("client disconnection: " + cli->getNickName() + "\n"));
+								disconnectClient(cli, std::string("client disconnection: " + cli->getNickName() + "\n"), true);
 							}
 						}
 					}
@@ -190,28 +190,35 @@ void	Server::receiveNewData(int fd)
 	{
         buff[bytes] = '\0';
         std::cout << YEL << "Cliente <" << fd << "> Datos: " << WHI << buff << std::endl;
-		check_comand(buff, cli);
+		cli->addinBuffer(buff);
+		check_comand(cli);
     }
 }
 
-void	Server::check_comand( char *buff, Client *cli )
+void	Server::check_comand(Client *cli )
 {
-	std::string receivedData(buff);
-    std::istringstream iss(receivedData);
     std::string command;
     std::string space;
+	std::string flag = "\n";
 	std::vector<std::string> params;
 	std::string temp = "";
 
-	if (receivedData.find(std::string("\r\n")) != std::string::npos
-		|| receivedData.find(std::string("\n")) != std::string::npos)
+	if (cli->getinBuffer().find(std::string("\r\n")) != std::string::npos
+		|| cli->getinBuffer().find(std::string("\n")) != std::string::npos)
 	{
+			std::string receivedData(cli->getinBuffer());
+			cli->cleaninBuffer();
+    		std::istringstream iss(receivedData);
 		// Este bucle procesa las líneas de mensajes desde el cliente.
 		while (!receivedData.empty())
 		{
+			if (receivedData.find("\r\n") != std::string::npos)
+			{
+				flag = "\r\n";
+			}
 			std::cout << "The data:" << receivedData << "." << std::endl;
 			// Buscar el delimitador de fin de línea
-			size_t pos = receivedData.find("\r\n");
+			size_t pos = receivedData.find(flag);
 			std::string sms;
 
 			// Si se encuentra el delimitador, extraer el mensaje
