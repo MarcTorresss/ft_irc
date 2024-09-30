@@ -60,7 +60,6 @@ public:
 	void		infoAllServerClients( std::string msg );
 	Client		*getClientNickName( std::string NickName );
 	void		handleConnection(Client *client);
-	int			check_arguments(int argc, char **argv);
 
 	//TO DO
 	bool		isChannel( std::string nameChannel );

@@ -39,6 +39,7 @@ void	Server::_setUser(Client *cli, std::vector<std::string> params){
 void	Server::_handlePrivmsg(Client *cli, std::vector<std::string> params)
 {
 	(void) params;
+    (void) cli;
 	/*if (cli->getStatus() != DONE)
 	{
 		std::cout << "User not registred!" <<std::endl; 
@@ -312,7 +313,7 @@ bool Server::validateChannelPassword(Client *cli, const std::string& channelName
 
 void Server::disconnectClient(Client *client, std::string msg, bool sendmsg)
 {
-	if (sendmmsg)
+	if (sendmsg)
 	{
 		std::string disconnect_msg = ":" + client->getNickName() + "!~" + client->getUserName() + " QUIT :" + msg + " \r\n";
 		infoAllServerClients(disconnect_msg);

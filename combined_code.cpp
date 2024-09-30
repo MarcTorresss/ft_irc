@@ -1,15 +1,18 @@
 #include "Channel.hpp"
 
-Channel::Channel( Client *client )
+Channel::Channel( Client *client,  std::string name, std::string pass)
 {
+	_userLimit = 5;
+	_channelName = name;
+	_channelPassword = pass;
 	_admins.push_back(client->getNickName());
 	_clients.push_back(client->getNickName());
 }
-std::string Channel::getName()
+std::string Channel::getName() const
 {
 	return _channelName;
 }
-std::string Channel::getPass()
+std::string Channel::getPass() const
 {
 	return _channelPassword;
 }
@@ -18,8 +21,8 @@ void	Channel::addClient( Client *client )
 {
 	if (_clients.size() >= _userLimit)
 		throw std::runtime_error("Channel is full!");
-	if (_inviteOnly && !isInvite(client))
-		throw std::runtime_error("User was not invited");
+	/*if (_inviteOnly && !isInvite(client))
+		throw std::runtime_error("");*/
 	_clients.push_back(client->getNickName());
 }
 
@@ -135,9 +138,10 @@ void Channel::setTopicAdmin(Client *client){
 }
 
 void Channel::setInviteOnly(Client *client){
-	if (!isAdmin( client ))
+	/*if (!isAdmin( client ))
 		throw std::runtime_error("Not admin");
-	_inviteOnly = !_inviteOnly;
+	_inviteOnly = !_inviteOnly;*/
+	(void) client;
 }
 
 void	Channel::setPassword( Client *client, std::string pswd )
@@ -177,10 +181,10 @@ Channel::~Channel()
 
 }#include "Client.hpp"
 
-Client::Client(): _fd(-1), _ipAdd(""){
+Client::Client(): _fd(-1), _status(0), _ipAdd(""), _inbuffer(""){
 }
 
-Client::Client(int fd, std::string ipadd): _fd(fd), _ipAdd(ipadd){
+Client::Client(int fd, std::string ipadd): _fd(fd), _status(0), _ipAdd(ipadd){
 }
 
 Client::~Client(){
@@ -216,6 +220,11 @@ std::string Client::getBuffer()
     return _buffer;
 }
 
+std::string Client::getinBuffer()
+{
+    return _buffer;
+}
+
 void Client::setUserName( std::string& userName )
 {
     _userName = userName;
@@ -246,12 +255,33 @@ void	Client::setBuffer( std::string buffer )
 	_buffer = buffer;
 }
 
+void	Client::setinBuffer( std::string buffer )
+{
+	_buffer = buffer;
+}
+
 void		Client::setStatus(int status){
 	_status = status;
 }
 
+void    Client::nextStatus()
+{
+    if (_status == PASS)
+    {
+        _status = NICK;
+    }
+    else if (_status == NICK)
+    {
+        _status = USER;
+    }
+    else if (_status == USER)
+    {
+        _status = DONE;
+    }
+}
+
 int		Client::getStatus(){
-	return DONE; //for debug, real is: return _status;
+	return _status;
 }
 
 int	Client::sendInfo( void )
@@ -284,16 +314,27 @@ void	Client::addBuffer( std::string msg )
     _buffer = _buffer + msg;
 }
 
+void	Client::addinBuffer( std::string msg )
+{
+    _buffer = _buffer + msg;
+}
+
 void	Client::cleanBuffer( void )
 {
-    std::cout << "aaaaaa" << std::endl;
+    // std::cout << "Buffer Cleaned" << std::endl;
     _buffer.clear();
+}
+
+void	Client::cleaninBuffer( void )
+{
+    // std::cout << "Buffer Cleaned" << std::endl;
+    _inbuffer.clear();
 }#include "ircserv.hpp"
 
 Server::Server(): _serSocketFd(-1), _port(4444){
 }
 
-Server::Server(int port): _serSocketFd(-1), _port(port){
+Server::Server(int port, std::string pass ): _serSocketFd(-1), _port(port), _password(pass) {
 }
 
 Server::~Server(){
@@ -350,7 +391,7 @@ void Server::loop()
 							}
 							else
 							{
-								disconnectClient(cli, std::string("client disconnection: " + cli->getNickName() + "\n"));
+								disconnectClient(cli, std::string("client disconnection: " + cli->getNickName() + "\n"), true);
 							}
 						}
 					}
@@ -408,8 +449,8 @@ void Server::acceptNewClient()
 		std::cout << "accept() failed" << std::endl;
 		return; //throw?
 	}
-	std::string capResponse = ":localhost CAP * LS :\r\n";
-    send(cliFd, capResponse.c_str(), capResponse.size(), 0);
+	// std::string capResponse = ":localhost CAP * LS :\r\n";
+    // send(cliFd, capResponse.c_str(), capResponse.size(), 0);
 
 	if (fcntl(cliFd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option (O_NONBLOCK) for non-blocking socket
 	{
@@ -426,8 +467,8 @@ void Server::acceptNewClient()
 	_clients.push_back(cli); //-> add the client to the vector of clients
 	_fds.push_back(newPoll); //-> add the client socket to the pollfd
 
-    std::string welcome = cli.getNickName() + "Welcome to the IRC server!\r\n";
-    send(cliFd, welcome.c_str(), welcome.size(), 0);
+    // std::string welcome = cli.getNickName() + "Welcome to the IRC server!\r\n";
+    // send(cliFd, welcome.c_str(), welcome.size(), 0);
 	std::cout << GRE << "Client <" << cliFd << "> Connected" << WHI << std::endl;
 }
 
@@ -480,70 +521,143 @@ void	Server::receiveNewData(int fd)
 	{
         buff[bytes] = '\0';
         std::cout << YEL << "Cliente <" << fd << "> Datos: " << WHI << buff << std::endl;
-		check_comand(buff, cli);
+		cli->addinBuffer(buff);
+		check_comand(cli);
     }
 }
 
-void	Server::check_comand( char *buff, Client *cli )
+void	Server::check_comand(Client *cli )
 {
-	std::string receivedData(buff);
-    std::istringstream iss(receivedData);
     std::string command;
-    std::string params;
+    std::string space;
+	std::string flag = "\n";
+	std::vector<std::string> params;
 	std::string temp = "";
 
-    // Separar el comando de los parámetros
-    iss >> command;
-    std::getline(iss, params);
+	if (cli->getinBuffer().find(std::string("\r\n")) != std::string::npos
+		|| cli->getinBuffer().find(std::string("\n")) != std::string::npos)
+	{
+			std::string receivedData(cli->getinBuffer());
+			cli->cleaninBuffer();
+    		std::istringstream iss(receivedData);
+		// Este bucle procesa las líneas de mensajes desde el cliente.
+		while (!receivedData.empty())
+		{
+			if (receivedData.find("\r\n") != std::string::npos)
+			{
+				flag = "\r\n";
+			}
+			std::cout << "The data:" << receivedData << "." << std::endl;
+			// Buscar el delimitador de fin de línea
+			size_t pos = receivedData.find(flag);
+			std::string sms;
 
-	int i = 0;
-	for (i = 0; command[i] != 0; ++i){
-		temp += (char)toupper(command[i]);}
-	command = temp;
-    std::string commands[] = { "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PING", "PASS", "QUIT"};
-    for (i = 0; i < 10; i++) {
-        if (commands[i] == command)
-            break;
-    }
-    switch (i)
-    {
-        case 0: // NICK
-            _setNickname(cli, params);
-            break;
-        case 1: // USER
-            _setUser(cli, params);
-            break;
-        case 2: // JOIN
-            _handleJoin(cli, params);
-            break;
-        case 3: // PRIVMSG
-            _handlePrivmsg(cli, params);
-            break;
-        case 4: // KICK
-            _handleKick(cli, params);
-            break;
-        case 5: // INVITE
-            _handleInvite(cli, params);
-            break;
-        case 6: // TOPIC
-            _handleTopic(cli, params);
-            break;
-        case 7: // MODE
-            _handleMode(cli, params);
-            break;
-		case 8: // PING
-        	_handlePing(cli, params);
-            break;
-        case 9: // PASS
-            //_authenticatePassword(cli, params);
-            break;
-		case 10: // QUIT
-            //_quitChannel(cli, params);
-            break;
-        default:
-			cli->addBuffer(ERR_UNKCMD421);
-            std::cout << "Comando no reconocido: " << command << std::endl;
-            break;
+			// Si se encuentra el delimitador, extraer el mensaje
+			if (pos != std::string::npos)
+			{
+				sms = receivedData.substr(0, pos);
+				receivedData.erase(0, pos + 2); //Eliminamos mansaje de la linia
+			}
+			else
+			{
+				// Si no se encuentra el delimitador, se asume que queda un mensaje parcial
+				sms = receivedData; 
+				receivedData = ""; // Limpiar la línea para salir del bucle
+			}
+
+			// std::cout << "Msg from " << cli->getNickName() << "😈😈😈😈😈"  << ": " << sms << std::endl;
+			params.clear();
+			std::istringstream iss(sms);
+			std::string token, command;
+
+			if (sms[0] == ':')
+			{
+				iss >> token; // Ignorar el prefijo (si existe)
+			}
+
+			// Leer el comando principal
+			iss >> command;
+
+			while (iss >> token)
+			{
+				// Si el token comienza con ':', se trata de un "trailing"
+				if (token[0] == ':')
+				{
+					std::string trailing;
+					std::getline(iss, trailing); // Leer el resto de la línea
+					params.push_back(token.substr(1) + trailing); // Agregar el "trailing" sin el ':'
+					break; // Salir del bucle al encontrar el "trailing"
+				}
+				else
+				{
+					// std::cout << "The data:" << token << "." << std::endl;
+					params.push_back(token); // Agregar el token a los parámetros
+				}
+			}
+			if (!params.empty())
+			{
+				std::string& lastParam = params[params.size() - 1]; // Obtener una referencia al último parámetro
+
+				// Verificar si el último parámetro no está vacío y termina con '\r'
+				if (!lastParam.empty() && lastParam[lastParam.size() - 1] == '\r')
+				{
+					lastParam.resize(lastParam.size() - 1); // Eliminar el último carácter
+				}
+			}
+			int i = 0;
+			for (i = 0; command[i] != 0; ++i){
+				temp += (char)toupper(command[i]);}
+			command = temp;
+			temp.clear();
+			std::string commands[] = { "NICK", "USER", "JOIN", "PRIVMSG", "KICK", "INVITE", "TOPIC", "MODE", "PING", "PASS", "WHOIS", "QUIT"};
+			for (i = 0; i < 10; i++) {
+				if (commands[i] == command)
+					break;
+			}
+			switch (i)
+			{
+				case 0: // NICK
+					_setNickname(cli, params);
+					break;
+				case 1: // USER
+					_setUser(cli, params);
+					break;
+				case 2: // JOIN
+					_handleJoin(cli, params);
+					break;
+				case 3: // PRIVMSG
+					_handlePrivmsg(cli, params);
+					break;
+				case 4: // KICK
+					_handleKick(cli, params);
+					break;
+				case 5: // INVITE
+					_handleInvite(cli, params);
+					break;
+				case 6: // TOPIC
+					_handleTopic(cli, params);
+					break;
+				case 7: // MODE
+					_handleMode(cli, params);
+					break;
+				case 8: // PING
+					_handlePing(cli, params);
+					break;
+				case 9: // PASS
+					_authenticatePassword(cli, params);
+					break;
+				case 10: // WHOIS
+					_handleWhoIs(cli, params);
+					break;
+				// case 11: // QUIT
+					//_quitChannel(cli, params);
+					// break;
+				default:
+					cli->addBuffer(ERR_UNKCMD421);
+					std::cout << "Comando no reconocido: " << command << std::endl;
+					break;
+			}
+		}
 	}
 }
 
@@ -560,116 +674,212 @@ Client	*Server::getClientNickName( std::string NickName )
 		if ((*it).getNickName() == NickName)
 			return &(*it);
 	return NULL;
-}#include "ircserv.hpp"
+}
 
-void	Server::_setNickname(Client *cli, std::string& params){
-	if (params == ""){
+const std::vector<Channel>& Server::getChannels() const {
+    return _channels;
+}#include "ircserv.hpp"
+#include "Server.hpp"
+#include "Channel.hpp"
+
+void	Server::_setNickname(Client *cli, std::vector<std::string> params){
+	// NO PUEDEN AVER NICKS REPETIDOS
+	if (params.empty())
+	{
+		// cli->setNickName(params[0]);
 		std::cout << "client " << cli->getFd() << " NICK is: " << cli->getNickName() << "-" << std::endl;
 	}
 	if (cli->getStatus() >= PASS){
 		std::cout << "NICK changed" << std::endl;
-		cli->setNickName(params);
+		cli->setNickName(params[0]);
 	}
 	else{
 		std::cout << ERR << "cannot change nick if password is not set" << std::endl;
 		//send message to client
 	}
+	cli->nextStatus();
 }
 
-void	Server::_setUser(Client *cli, std::string& params){
-	if (params == ""){
+void	Server::_setUser(Client *cli, std::vector<std::string> params){
+	if (params.empty()){
 		std::cout << "client <" << cli->getFd() << "> USR is: " << cli->getUserName() << "-" << std::endl;
 	}
 	if (cli->getStatus() >= NICK){
 		std::cout << "USR changed" << std::endl;
-		cli->setUserName(params);
+		cli->setUserName(params[0]);
 	}
 	else{
 		std::cout << ERR << "cannot change username if nickname is not set" << std::endl;
 		//send err message to client
 	}
+	handleConnection(cli); //esto no va aqui
+	cli->nextStatus();
 }
 
-void	Server::joinChannel(Client *cli, std::string& params){
-	(void) cli;
+void	Server::_handlePrivmsg(Client *cli, std::vector<std::string> params)
+{
 	(void) params;
-	std::cout << "client <" << cli->getFd() << "> wants to join channel " << params << std::endl;
-	for (int i = 0; _channels.size(); ++i){
-		if (_channels[i].getName() == params)
-			_channels[i].addClient(cli);//join channel + check channel perms (password, invite only, has been invited?)
+    (void) cli;
+	/*if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
 	}
-	//else create channel
+ 	// destinatario y mensaje
+    if (params.size() < 2)
+    {
+        cli->addBuffer(ERR_PARAM461);
+        return;
+    }
+
+    std::string target = params[0]; // El destinatario (cliente o canal)
+    std::string message = params[1]; // El mensaje (puedes unir los params si hay espacios)
+
+    // Comprobar si el destinatario es un cliente o un canal
+    if (isChannel(target))
+    {
+        // Enviar mensaje a todos los usuarios del canal
+        Channel *channel = findChannel(target);
+        if (channel)
+        {
+            channel->broadcastMessage(cli, message);
+        }
+        else
+        {
+            cli->addBuffer("401 " + target + " :No such channel\r\n");
+        }
+    }
+    else
+    {
+        // Enviar mensaje a un cliente específico
+        Client *recipient = findClient(target);
+        if (recipient)
+        {
+            recipient->addBuffer(":" + cli->getNickName() + " PRIVMSG " + target + " :" + message + "\r\n");
+        }
+        else
+        {
+            cli->addBuffer("401 " + target + " :No such nick\r\n");
+        }
+    }*/
 }
 
-void	Server::_handlePrivmsg(Client *cli, std::string& params){
-	(void) cli;
-	(void) params;
-	//create a private(invite only) channel between 2 clients
-}
-
-void	Server::_handleKick(Client *cli, std::string& params){
-	int channelIdx = getChannelIndex();
-	_channels[channelIdx].removeClient(cli, params);
-}
-
-void	Server::_handleInvite(Client *cli, std::string& params){
-	int channelIdx = getChannelIndex();
-	//does the client need to be connected to server to be invited??
-	_channels[channelIdx].addInvite(cli, params);
-	//2. notify user?
-}
-
-void	Server::_handleTopic(Client *cli, std::string& params){
-	int channelIdx = getChannelIndex();
-	_channels[channelIdx].setTopic(cli, params);
-}
-
-void	Server::_handleMode(Client *cli, std::string& params){
-	if (params == ""){
-		std::cout << "the current channel modes are [" << "]" <<std::endl; //print los channel modes
+void	Server::_handleKick(Client *cli, std::vector<std::string> params){
+	if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
 	}
-	std::string modes[] = {"i","t","k","o","l"};
-	int i = 0;
-	for (i = 0; i < 5; ++i){
-		if (modes[i] == params)
-			break;
+	else
+	{
+		int channelIdx = getChannelIndex();
+		_channels[channelIdx].removeClient(cli, params[0]);
 	}
-	try{
-		switch (i) //DONE
-		{
-			case 0: //i
-				_channels[0].setInviteOnly(cli);
-				break;
-			case 1: //t
-				_channels[0].setTopicAdmin(cli);
-				break;
-			case 2: //k
-				_channels[0].setPassword(cli,params);
-				break;
-			case 3: //o
-				_channels[0].addAdmin(cli,params);
-				break;
-			case 4: //l
-				_channels[0].setUserLimit(cli,params);
-				break;
-			default:
-				std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
+}
+
+void	Server::_handleInvite(Client *cli, std::vector<std::string> params){
+	if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
+	}
+	else
+	{
+		int channelIdx = getChannelIndex();
+		//does the client need to be connected to server to be invited??
+		_channels[channelIdx].addInvite(cli, params[0]);
+		//2. notify user?
+	}
+}
+
+void	Server::_handleTopic(Client *cli, std::vector<std::string> params){
+	if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
+	}
+	else
+	{	
+		int channelIdx = getChannelIndex();
+		_channels[channelIdx].setTopic(cli, params[0]);
+	}
+}
+
+void	Server::_handleMode(Client *cli, std::vector<std::string> params){
+	/*if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
+	}
+	else
+	{*/
+		for (size_t i = 0; i < params.size(); ++i) {
+			std::cout << "Param " << i << ": " << params[i] << std::endl;
+		}
+		std::string type = params[params.size() - 1];
+		std::cout << type << std::endl;
+		if (params.empty()){
+			std::cout << "the current channel modes are [" << "]" <<std::endl; //print los channel modes
+		}
+		std::string modes[] = {"+i","t","k","o","l"};
+		int i = 0;
+		for (i = 0; i < 5; ++i){
+			// std::cout << params[params.size() - 1] << std::endl;
+			// for (size_t i = 0; i < params.size(); ++i) {
+			// 	std::cout << "Param " << i << ": " << params[i] << std::endl;
+			// }
+			// if (modes[i] == params[params.size() - 1])
+			// 	break;
+			if (modes[i] == type)
 				break;
 		}
-	}catch(std::exception &e){
-		std::cout << ERR << e.what() <<std::endl;
+		try{
+			switch (i) //DONE
+			{
+				case 0: //i
+					_channels[0].setInviteOnly(cli);
+					break;
+				case 1: //t
+					_channels[0].setTopicAdmin(cli);
+					break;
+				case 2: //k
+					_channels[0].setPassword(cli,params[0]);
+					break;
+				case 3: //o
+					_channels[0].addAdmin(cli,params[0]);
+					break;
+				case 4: //l
+					_channels[0].setUserLimit(cli,params[0]);
+					break;
+				default:
+					std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
+					break;
+			}
+		}catch(std::exception &e){
+			std::cout << ERR << e.what() <<std::endl;
+		}
+	//}
+}
+
+void	Server::_handlePing(Client *cli, std::vector<std::string> params)
+{
+    (void) params;
+	if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" <<std::endl; 
+		cli->addBuffer("User not registred!\r\n");
+	}
+	else
+	{
+		std::cout << "test" << std::endl;
+    	cli->addBuffer("Ping Marc Pong Albert and javi from munich\r\n");
 	}
 }
 
-void	Server::_handlePing(Client *cli, std::string& params)
-{
-    (void) params;
-    cli->addBuffer("Ping Marc Pong Albert and javi from munich\r\n");
-}
-
-void Server::addChannel(const std::string& channelName, const std::string& password) {
-    (void) channelName;
-    (void) password;
+void Server::addChannel(Client *cli, const std::string& channelName, const std::string& password) {
+    Channel newChannel(cli, channelName, password);
+    _channels.push_back(newChannel);
+    getChannelsList();
 }
 
 std::vector<std::string> splitString(const std::string& input, char delimiter)
@@ -684,41 +894,82 @@ std::vector<std::string> splitString(const std::string& input, char delimiter)
     return ret;
 }
 
-void Server::_handleJoin(Client *cli, std::string& params)
+void Server::_handleJoin(Client *cli, std::vector<std::string> params)
 {
-    //param format [#channel1,#channel2 key1,key2]
-    std::vector<std::pair<std::string, std::string> > channelKeyPairs;    std::vector<std::string> channels, keys;
-    std::istringstream iss(params);
-    std::string command, channIn, keysIn;
-    iss >> command;
+	if (cli->getStatus() != DONE)
+	{
+		std::cout << "User not registred!" << std::endl; 
+		cli->addBuffer("User not registred!\r\n");
+	}
+	else
+	{
+		//param format [#channel1,#channel2 key1,key2]
+		std::vector<std::pair<std::string, std::string> > channelKeyPairs;    std::vector<std::string> channels, keys;
+		std::istringstream namechanel(params[0]);
+		std::istringstream passchanel(params[1]);
+		std::string channIn, keysIn;
 
-    std::getline(iss, channIn, ' ');
-    std::getline(iss, keysIn);
+		std::cout << params[0] << std::endl;
+		std::getline(namechanel, channIn, ' ');
+		std::cout << "Channels: " << channIn << std::endl;
+		std::getline(passchanel, keysIn);
+		std::cout << "Keys: "<< keysIn << std::endl;
 
-    if (channIn.empty() || keysIn.empty())
-        throw std::invalid_argument("Invalid JOIN format, [#channel1,#channel2] [key1,key2]");
-    
-    channels = splitString(channIn, ',');
-    keys = splitString(keysIn, ',');
 
-    if (channels.size() != keys.size())
-        throw std::invalid_argument("Number of channels does not match number of keys");
-    
-    for (size_t i = 0; i < channels.size(); i++)
-    {
-        if (channels[i].find("#") != 0)
-            throw std::invalid_argument("Invalid channel format. Channels must start with '#'.");
-        channelKeyPairs.push_back(std::make_pair(channels[i], keys[i]));
-        const std::string& channelName = channelKeyPairs[i].first;
-        const std::string& channelKey = channelKeyPairs[i].second;
-        validateChannelPassword(cli, channelName, channelKey);
-    }
-    //parse channel and pass
-    //if channel exists
-        //check password
-            //join client
-    //else addChannel
+		if (channIn.empty() || keysIn.empty())
+		{
+			std::cout << "Invalid JOIN format, #channel key or [#channel1,#channel2] [key1,key2]" << std::endl;
+			cli->addBuffer("Invalid JOIN format, #channel key or [#channel1,#channel2] [key1,key2]\r\n");
+			return;
+		}
+		channels = splitString(channIn, ',');
+		keys = splitString(keysIn, ',');
+
+		if (channels.size() != keys.size())
+			{std::cout << "Number of channels does not match number of keys" << std::endl; return;}   
+		for (size_t i = 0; i < channels.size(); i++)
+		{
+			if (channels[i].find("#") != 0)
+				{std::cout << "Invalid channel format. Channels must start with '#'." << std::endl; return;}
+			channelKeyPairs.push_back(std::make_pair(channels[i], keys[i]));
+			const std::string& channelName = channelKeyPairs[i].first;
+			const std::string& channelKey = channelKeyPairs[i].second;
+			validateChannelPassword(cli, channelName, channelKey);
+		}
+		//parse channel and pass
+		//if channel exists
+			//check password
+				//join client
+		//else addChannel
+	}
 }
+
+void Server::_authenticatePassword(Client *cli, std::vector<std::string> params)
+{
+	if (cli->getStatus() != PASS)
+	{
+		disconnectClient( cli, "462 * :" + params[0] + " may not reregister (need PASS state)\r\n", false );
+	}
+	else if (params[0].size() < 1)
+	{
+		cli->addBuffer("461 " + cli->getNickName() + " PASS :Parameters missing\r\n");
+	}
+	else if (params[0] != _password)
+	{
+		cli->addBuffer("464 * :Password " + params[0] + " incorrect " + _password + "\r\n");
+	}
+	else
+	{
+		cli->nextStatus();
+	}
+}
+
+void	Server::_handleWhoIs(Client *cli, std::vector<std::string> params)
+{
+	(void) cli;
+	(void) params;
+}
+
 bool Server::validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password) {
     
     for (size_t i = 0; i < _channels.size(); i++) {
@@ -734,14 +985,19 @@ bool Server::validateChannelPassword(Client *cli, const std::string& channelName
             }
         }
     }
-    addChannel(channelName, password);
+	std::string channelAdded = "Channel " + channelName + " added!\r\n";
+    send(cli->getFd(), channelAdded.c_str(), channelAdded.size(), 0);
+    addChannel(cli, channelName, password);
     return true;
 }
 
-void Server::disconnectClient(Client *client, std::string msg)
+void Server::disconnectClient(Client *client, std::string msg, bool sendmsg)
 {
-    std::string disconnect_msg = ":" + client->getNickName() + "!~" + client->getUserName() + " QUIT :" + msg + " \r\n";
-    infoAllServerClients(disconnect_msg);
+	if (sendmsg)
+	{
+		std::string disconnect_msg = ":" + client->getNickName() + "!~" + client->getUserName() + " QUIT :" + msg + " \r\n";
+		infoAllServerClients(disconnect_msg);
+	}
     // Iterar sobre los canales para los que el cliente está registrado
     for (size_t i = 0; i < _channels.size(); i++)
     {
@@ -774,7 +1030,22 @@ void Server::disconnectClient(Client *client, std::string msg)
         }
     }
     clearClients(client->getFd());
-}#include "ircserv.hpp"
+}
+
+void Server::handleConnection(Client *client)
+{
+	std::string serverName = "MyIRC";
+	std::string version = "1.0";
+    // Enviar mensaje de bienvenida a Irssi
+	std::string welcomeMessage = ":" + serverName + " 001 " + client->getNickName() + " :Welcome to the " + serverName + " IRC Network, " + client->getNickName() + "\r\n";
+	client->addBuffer(welcomeMessage);
+
+	// Enviar información sobre el servidor
+	std::string versionMessage = ":" + serverName + " 002 " + client->getNickName() + " :Your host is " + serverName + ", running version " + version + "\r\n";
+    client->addBuffer(versionMessage);
+}
+#include "ircserv.hpp"
+#include "utils.cpp"
 
 bool serverShutdown = false;
 
@@ -784,7 +1055,7 @@ int main( int argc, char **argv)
 	signal(SIGQUIT, signalHandler);
 	if (check_arguments(argc, argv) == 0) 
 	{
-		Server server(atoi(argv[1]));
+		Server server(atoi(argv[1]), argv[2]);
 		
 		try
 		{
@@ -801,7 +1072,8 @@ int main( int argc, char **argv)
 		std::cout << "Usage is ./ircserv [port] [password]" << std::endl;
 		return -1;
 	}
-}#include "ircserv.hpp"
+}#include "Server.hpp"
+#include "ircserv.hpp"
 
 void signalHandler(int signum) {
 	(void)signum;
@@ -847,7 +1119,22 @@ int check_arguments(int argc, char **argv) {
 	return 0;
 }
 
-#ifndef CHANNEL_HPP_
+void Server::getChannelsList() const {
+	
+	const std::vector<Channel>& channels = getChannels();
+
+    if (channels.empty()) {
+        std::cout << "No channels available." << std::endl;
+        return;
+    }
+
+    std::cout << "List of Channels: " << std::endl;
+    for (size_t i = 0; i < channels.size(); ++i) {
+        std::cout << "Channel " << i + 1 << ": " << std::endl;
+        std::cout << "  Name: " << channels[i].getName() << std::endl;
+        std::cout << "  Password: " << (channels[i].getPass().empty() ? "No password" : channels[i].getPass()) << std::endl;
+    }
+}#ifndef CHANNEL_HPP_
 # define CHANNEL_HPP_
 
 # include "ircserv.hpp"
@@ -873,7 +1160,7 @@ private:
 
 public:
 	Channel();
-	Channel( Client *client );
+	Channel( Client *client, std::string name, std::string pass);
 
 	~Channel();
 
@@ -888,9 +1175,9 @@ public:
 	void	removeInvite( Client *client, std::string target );
 	void	removeClient(Client *client, std::string target);
 
-	std::string getName();
-	std::string getTopic();
-	std::string getPass();
+	std::string getName() const;
+	std::string getTopic() const;
+	std::string getPass() const;
 
 	void setUserLimit( Client *client, std::string limit );
 	void setName(std::string name);
@@ -918,6 +1205,7 @@ private:
 	std::string			_ipAdd; //-> client ip address
 	struct sockaddr_in	_clientAdd; // direccion i puerto del cliente
 	std::string			_buffer;
+	std::string			_inbuffer;
 
 public:
 	Client();
@@ -930,6 +1218,9 @@ public:
 	std::string getIpAdd( void );
     struct sockaddr_in getClientAdd( void );
     std::string getBuffer( void );
+	std::string getinBuffer( void );
+	void	setinBuffer( std::string inbuffer );
+	void	addinBuffer( std::string msg );
 	void	setFd( int fd );
 	void	setIpAdd( std::string ipAdd);
 	void	setUserName( std::string& userName );
@@ -942,6 +1233,8 @@ public:
 	int		getStatus();
 	void	addBuffer( std::string msg );
 	void	cleanBuffer( void );
+	void	cleaninBuffer( void );
+	void	nextStatus( void );
 };
 
 #endif#ifndef SERVER_HPP_
@@ -957,7 +1250,6 @@ public:
 
 class Channel;
 class Client;
-class Channel;
 
 class Server
 {
@@ -967,26 +1259,28 @@ private:
 	std::vector<Client> _clients;
 	std::vector<Channel> _channels;
 	std::vector<struct pollfd> _fds;
+	std::string _password; //pass del server o del cliente que te pasa
 
     Client* getClient(int fd);
 
-	void	_authenticatePassword(Client *cli, std::string& params);
-    void	_setNickname(Client *cli, std::string& params);
-    void	_setUser(Client *cli, std::string& params);
-    void	_sendPing(Client *cli, std::string& params);
-    void	_handleCapabilities(Client *cli, std::string& params);
-    void	_handleQuit(Client *cli, std::string& params);
-    void	_handleJoin(Client *cli, std::string& params);
-    void	_handlePrivmsg(Client *cli, std::string& params);
-    void	_handleKick(Client *cli, std::string& params);
-    void	_handleInvite(Client *cli, std::string& params);
-    void	_handleTopic(Client *cli, std::string& params);
-    void	_handleMode(Client *cli, std::string& params);
-	void	_handlePing(Client *cli, std::string& params);
+	void	_authenticatePassword(Client *cli, std::vector<std::string> params);
+    void	_setNickname(Client *cli, std::vector<std::string> params);
+    void	_setUser(Client *cli, std::vector<std::string> params);
+    void	_sendPing(Client *cli, std::vector<std::string> params);
+    void	_handleCapabilities(Client *cli, std::vector<std::string> params);
+    void	_handleQuit(Client *cli, std::vector<std::string> params);
+    void	_handleJoin(Client *cli, std::vector<std::string> params);
+    void	_handlePrivmsg(Client *cli, std::vector<std::string> params);
+    void	_handleKick(Client *cli, std::vector<std::string> params);
+    void	_handleInvite(Client *cli, std::vector<std::string> params);
+    void	_handleTopic(Client *cli, std::vector<std::string> params);
+    void	_handleMode(Client *cli, std::vector<std::string> params);
+	void	_handlePing(Client *cli, std::vector<std::string> params);
+	void	_handleWhoIs(Client *cli, std::vector<std::string> params);
 
 public:
 	Server();
-	Server(int port);
+	Server( int port, std::string pass );
 	~Server();
 
 	// static void signalHandler(int signum);
@@ -994,17 +1288,27 @@ public:
 	void 		loop();
 	void		acceptNewClient();
 	void		receiveNewData(int fd);
-	void		check_comand( char *buff, Client *cli );
-	void		joinChannel(Client *cli, std::string& params);
+	void		check_comand(Client *cli );
 
 	void 		closeFds();
 	void 		clearClients(int fd);
 	int			getChannelIndex(); //DEBE RETORNAR EL INDICE DEL ARRAY DEL CANAL DONDE SE HA ENVIADO EL MENSAJE
-	void 		addChannel(const std::string& channelName, const std::string& password);
+	void 		addChannel(Client *cli, const std::string& channelName, const std::string& password);
 	bool 		validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password);
-  	void		disconnectClient(Client *client, std::string msg);
+  	void		disconnectClient(Client *client, std::string msg, bool sendmsg);
 	void		infoAllServerClients( std::string msg );
 	Client		*getClientNickName( std::string NickName );
+	void		handleConnection(Client *client);
+
+	//TO DO
+	bool		isChannel( std::string nameChannel );
+	Channel		*findChannel( std::string nameChannel );
+	Client		*findClient( std::string nick );
+	void		broadcastMessage( Client cli , std::string message);
+
+	//Debugging
+	const std::vector<Channel>& getChannels() const;
+	void getChannelsList() const;
 };
 
 #endif#ifndef IRCSERV_HPP_
@@ -1063,4 +1367,61 @@ extern bool serverShutdown;
 void signalHandler(int signum);
 int check_arguments(int argc, char **argv);
 
-#endif
+#endifNAME	 =	ircserv
+FLAGS	 =	-std=c++98 -Wall -Wextra -Werror
+INCLUDE  =	-Iinc/
+DIR_OBJS =	objs/
+DIR_SRC  = src/
+
+# *******************************	FILES	******************************* #
+
+FILES		=	main.cpp Server.cpp Client.cpp Channel.cpp utils.cpp commands.cpp
+FILES_SRC	=	$(addprefix $(DIR_SRC),$(FILES))
+
+# *******************************  OBJECTS	******************************* #
+
+OBJS	=	$(FILES_SRC:%.cpp=$(DIR_OBJS)%.o) #$(addprefix $(DIR_OBJS),$(FILES_SRC:.cpp=.o))
+DEPS	=	$(OBJS:%.o=%.d) #$(OBJS:.o=.d)
+
+# *******************************  COLORS	******************************* #
+
+RED			=	\033[0;31m
+GREEN		=	\033[0;32m
+YELLOW		=	\033[0;33m
+BLUE		=	\033[0;34m
+PURPLE		=	\033[0;35m
+CYAN		=	\033[0;36m
+RESET		=	\033[0m
+GREEN_BOLD	=	\033[1;32m
+BLUE_BOLD	=	\033[1;34m
+CYAN_BOLD	=	\033[1;36m
+
+# ********************************  RULES   ******************************* #
+
+all: $(DIR_OBJS) $(NAME)
+
+$(DIR_OBJS):
+	@mkdir -p $(DIR_OBJS)
+
+$(NAME): $(OBJS)
+	c++ $(FLAGS) $(INCLUDE) $(OBJS) -o $(NAME)
+	@echo "${BLUE_BOLD}Internet Relay Chat ${GREEN}compiled ✅\n${RESET}"
+
+$(DIR_OBJS)%.o: %.cpp Makefile
+	@mkdir -p $(dir $@)
+	c++ $(FLAGS)  $(INCLUDE) -MMD -c $< -o $@
+	@echo "${YELLOW}Compiling ${RESET}$@...${RESET}"
+
+clean:
+	@rm -rf $(DIR_OBJS)
+	@echo "${RED}Deleting${RESET} all objects 🗑"
+
+fclean: clean
+	@rm -f $(NAME)
+	@echo "${BLUE_BOLD}Internet Relay Chat ${RED}deleted${RESET}"
+
+re: fclean all
+
+-include $(DEPS)
+
+.PHONY: all clean fclean re

@@ -1,6 +1,6 @@
 #include "Client.hpp"
 
-Client::Client(): _fd(-1), _status(0), _inbuffer(""), _ipAdd(""){
+Client::Client(): _fd(-1), _status(0), _ipAdd(""), _inbuffer(""){
 }
 
 Client::Client(int fd, std::string ipadd): _fd(fd), _status(0), _ipAdd(ipadd){

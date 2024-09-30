@@ -1,5 +1,5 @@
-#include "ircserv.hpp"
 #include "Server.hpp"
+#include "ircserv.hpp"
 
 void signalHandler(int signum) {
 	(void)signum;
@@ -7,7 +7,7 @@ void signalHandler(int signum) {
 	//std::cout << "Signal caught: " << signum << std::endl;
 }
 
-int Server::check_arguments(int argc, char **argv) {
+int check_arguments(int argc, char **argv) {
 	if (argc != 3){
 		std::cerr << ERR <<"Wrong arguments [port, password]" << WHI << std::endl;
 		return -1;
