@@ -40,17 +40,18 @@ public:
 	void	removeClient(Client *client, std::string target);
 
 	std::string getName() const;
-	std::string getTopic() const;
+	std::string getTopic();
 	std::string getPass() const;
 
-	void setUserLimit( Client *client, std::string limit );
-	void setName(std::string name);
-	void setPassword(Client *client, std::string pswd );
-	void setInviteOnly(Client *client);
-	void setTopic( Client *client, std::string topic);
-	void setTopicAdmin(Client *client);
-	int someAdmin( void );
-	void setAdmin( std::string NickName );
+	void	setUserLimit( Client *client, std::string limit );
+	void	setName(std::string name);
+	void	setPassword(Client *client, std::string pswd );
+	void	setInviteOnly(Client *client);
+	void	setTopic( Client *client, std::string topic);
+	void	setTopicAdmin(Client *client);
+	int		someAdmin( void );
+	void	setAdmin( std::string NickName );
+	bool	istopiclock( void );
 	std::vector< std::string >	getClients();
 };
 

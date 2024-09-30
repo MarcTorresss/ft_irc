@@ -6,8 +6,10 @@ void	Server::_setNickname(Client *cli, std::vector<std::string> params)
 {
 	if (cli->getStatus() == DONE)
 	{
-		cli->setNickName(params[0]);
-		infoAllServerClients( std::string( "The new NickName is " + params[0] + "\r\n"));
+		std::string oldNick = cli->getNickName();
+    	cli->setNickName(params[0]);
+	    std::string nickChangeMessage = ":" + oldNick + " NICK :" + params[0] + "\r\n";
+		infoAllServerClients(nickChangeMessage);
 	}
 	else if (cli->getStatus() != NICK)
 	{
@@ -33,13 +35,10 @@ void	Server::_setNickname(Client *cli, std::vector<std::string> params)
 
 void	Server::_setUser(Client *cli, std::vector<std::string> params)
 {
+	// std::cout << params.size() << std::endl;
 	if (cli->getStatus() != USER)
 	{
 		cli->addBuffer("462 * : USER not reregistred ( need PASS and NICK )\r\n");
-	}
-	else if (params.size() != 2)
-	{
-		cli->addBuffer(std::string("461 " + cli->getNickName() + " USER :Invalid parameters\r\n"));
 	}
 	else
 	{
@@ -53,90 +52,119 @@ void	Server::_setUser(Client *cli, std::vector<std::string> params)
 
 void	Server::_handlePrivmsg(Client *cli, std::vector<std::string> params)
 {
-	(void) params;
-    (void) cli;
-	/*if (cli->getStatus() != DONE)
+	if (cli->getStatus() != DONE)
 	{
-		std::cout << "User not registred!" <<std::endl; 
-		cli->addBuffer("User not registred!\r\n");
+		cli->addBuffer(std::string("451 * :PRIVMSG-You have not registered \r\n"));
 	}
- 	// destinatario y mensaje
-    if (params.size() < 2)
-    {
-        cli->addBuffer(ERR_PARAM461);
-        return;
-    }
+	else if (params.size() < 2)
+	{
+		cli->addBuffer(ERR_PARAM461);
+		return;
+	}
 
     std::string target = params[0]; // El destinatario (cliente o canal)
     std::string message = params[1]; // El mensaje (puedes unir los params si hay espacios)
-
-    // Comprobar si el destinatario es un cliente o un canal
-    if (isChannel(target))
-    {
-        // Enviar mensaje a todos los usuarios del canal
-        Channel *channel = findChannel(target);
-        if (channel)
-        {
-            channel->broadcastMessage(cli, message);
-        }
-        else
-        {
-            cli->addBuffer("401 " + target + " :No such channel\r\n");
-        }
-    }
-    else
-    {
-        // Enviar mensaje a un cliente específico
-        Client *recipient = findClient(target);
-        if (recipient)
-        {
-            recipient->addBuffer(":" + cli->getNickName() + " PRIVMSG " + target + " :" + message + "\r\n");
-        }
-        else
-        {
-            cli->addBuffer("401 " + target + " :No such nick\r\n");
-        }
-    }*/
+	std::string token;
+	std::vector<std::string> tokens;
+	std::istringstream iss( target );
+	while (std::getline(iss, token, ','))
+	{
+		tokens.push_back(token);
+	}
+	for( size_t i = 0; i < tokens.size(); i++)
+	{
+		std::string name = tokens[i];
+		Client *client = getClientNickName(cli->getNickName());
+		if (!client)
+		{
+        	std::cerr << "Error: No clients to send" << std::endl;
+        	break ;
+    	}
+		if (name[0] == '#')
+		{
+			if (Channel *channel = findChannel(name))
+			{
+				std::cout << "entra" << std::endl;
+				if (channel->isClient(cli))
+				{
+					std::cout << "entra" << std::endl;
+					sendMsgToChannel( client->getFd(), std::string(":" + client->getNickName() + " PRIVMSG " + name + " :" + params[1] + " \r\n"), channel );
+				}
+				else
+				{
+					client->addBuffer(std::string("404 " + client->getNickName() + " " + name + " :Cannot send to channel \r\n"));
+				}
+			}
+			else
+			{
+				client->addBuffer(std::string("403 " + client->getNickName() + " " + name + " :No such channel\r\n"));
+			}
+		}
+	}
 }
 
 void	Server::_handleKick(Client *cli, std::vector<std::string> params){
-	if (cli->getStatus() != DONE)
-	{
-		std::cout << "User not registred!" <<std::endl; 
-		cli->addBuffer("User not registred!\r\n");
-	}
-	else
-	{
-		int channelIdx = getChannelIndex();
-		_channels[channelIdx].removeClient(cli, params[0]);
-	}
+	(void) cli;
+	(void) params;
 }
 
-void	Server::_handleInvite(Client *cli, std::vector<std::string> params){
+void	Server::_handleInvite(Client *cli, std::vector<std::string> params)
+{
+	(void) params;
 	if (cli->getStatus() != DONE)
 	{
 		std::cout << "User not registred!" <<std::endl; 
 		cli->addBuffer("User not registred!\r\n");
 	}
-	else
-	{
-		int channelIdx = getChannelIndex();
+	// else
+	// {
+		// int channelIdx = getChannelIndex();
 		//does the client need to be connected to server to be invited??
-		_channels[channelIdx].addInvite(cli, params[0]);
+		// _channels[channelIdx].addInvite(cli, params[0]);
 		//2. notify user?
-	}
+	// }
 }
 
-void	Server::_handleTopic(Client *cli, std::vector<std::string> params){
+void	Server::_handleTopic(Client *cli, std::vector<std::string> params)
+{
 	if (cli->getStatus() != DONE)
 	{
-		std::cout << "User not registred!" <<std::endl; 
-		cli->addBuffer("User not registred!\r\n");
+		cli->addBuffer(std::string("451 * :TOPIC-You have not registered \r\n"));
+		return ;
+	}
+  	if (params.size() < 1) {
+        cli->addBuffer("461 " + cli->getNickName() + " TOPIC :Not enough parameters\r\n");
+        return;
+    }
+	else if (Channel *channel = findChannel(params[0]))
+	{
+		if (!channel->isClient(cli))
+		{
+			cli->addBuffer(std::string(ERR_CHANN442));
+		}
+		else if (params.size() == 1)
+		{
+    		if (channel->getTopic() == std::string("")) {
+        		cli->addBuffer(std::string(ERR_TOPIC331));
+    		} else {
+        		cli->addBuffer(std::string(MSG_TOPIC332));
+    		}
+		}
+		else if (!channel->istopiclock() && channel->isAdmin(cli) == 1)
+		{
+			std::string newTopic = params[1];
+			channel->setTopic(cli, newTopic);
+			std::string topicChangeMsg = ":" + cli->getNickName() + " TOPIC " + params[0] + " :" + channel->getTopic() + "\r\n";
+			infoAllServerClients(topicChangeMsg);
+		}
+		else
+		{
+			cli->addBuffer(std::string(ERR_OPNEEDED));
+		}
 	}
 	else
-	{	
-		int channelIdx = getChannelIndex();
-		_channels[channelIdx].setTopic(cli, params[0]);
+	{
+		cli->addBuffer(std::string(ERR_NOCHANEL));
 	}
 }
 
@@ -148,11 +176,11 @@ void	Server::_handleMode(Client *cli, std::vector<std::string> params){
 	}
 	else
 	{*/
-		for (size_t i = 0; i < params.size(); ++i) {
-			std::cout << "Param " << i << ": " << params[i] << std::endl;
-		}
+		// for (size_t i = 0; i < params.size(); ++i) {
+		// 	std::cout << "Param " << i << ": " << params[i] << std::endl;
+		// }
 		std::string type = params[params.size() - 1];
-		std::cout << type << std::endl;
+		// std::cout << type << std::endl;
 		if (params.empty()){
 			std::cout << "the current channel modes are [" << "]" <<std::endl; //print los channel modes
 		}
@@ -206,7 +234,6 @@ void	Server::_handlePing(Client *cli, std::vector<std::string> params)
 	}
 	else
 	{
-		std::cout << "test" << std::endl;
     	cli->addBuffer("Ping Marc Pong Albert and javi from munich\r\n");
 	}
 }

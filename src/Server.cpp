@@ -106,7 +106,6 @@ void Server::createSocket()
 
 void Server::acceptNewClient()
 {
-	std::cout << GRE << "NEW CLIENT" << WHI << std::endl;
 	Client cli; //-> create a new client
 	struct sockaddr_in cliSocket;//for storing IP, PORT, PROT
 	struct pollfd newPoll;
@@ -138,20 +137,31 @@ void Server::acceptNewClient()
 
     // std::string welcome = cli.getNickName() + "Welcome to the IRC server!\r\n";
     // send(cliFd, welcome.c_str(), welcome.size(), 0);
-	std::cout << GRE << "Client <" << cliFd << "> Connected" << WHI << std::endl;
+	std::cout << GRE << "Client <" << cliFd << "> Connected" << WHI << std::endl << std::endl;
 }
 
-Client* Server::getClient(int fd) {
-    for (std::vector<Client>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
-        if (it->getFd() == fd) {
+Client* Server::getClient(int fd)
+{
+    for (std::vector<Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	{
+        if (it->getFd() == fd)
+		{
             return &(*it);
         }
     }
     return NULL;
 }
 
-int	Server::getChannelIndex(){
-	return 0; //DEBE RETORNAR EL INDICE DEL ARRAY DEL CANAL DONDE SE HA ENVIADO EL MENSAJE
+int Server::getChannelIndex( std::string channelName )
+{
+    for (size_t i = 0; i < _channels.size(); ++i)
+	{
+        if (_channels[i].getName() == channelName)
+		{
+            return i;
+        }
+    }
+    return -1;
 }
 
 void Server::clearClients(int fd){
@@ -167,7 +177,6 @@ void Server::clearClients(int fd){
 
 void	Server::receiveNewData(int fd)
 {
-	std::cout << GRE << "DATA" << WHI << std::endl;
   	char buff[BUFF_SIZE];
 	Client	*cli = getClient(fd);
 
@@ -206,17 +215,18 @@ void	Server::check_comand(Client *cli )
 	if (cli->getinBuffer().find(std::string("\r\n")) != std::string::npos
 		|| cli->getinBuffer().find(std::string("\n")) != std::string::npos)
 	{
-			std::string receivedData(cli->getinBuffer());
-			cli->cleaninBuffer();
-    		std::istringstream iss(receivedData);
-		// Este bucle procesa las líneas de mensajes desde el cliente.
+
+		std::string receivedData(cli->getinBuffer());
+		cli->cleaninBuffer();
+    	std::istringstream iss(receivedData);
+
 		while (!receivedData.empty())
 		{
 			if (receivedData.find("\r\n") != std::string::npos)
 			{
 				flag = "\r\n";
 			}
-			std::cout << "The data:" << receivedData << "." << std::endl;
+			// std::cout << "The data:" << receivedData << "." << std::endl;
 			// Buscar el delimitador de fin de línea
 			size_t pos = receivedData.find(flag);
 			std::string sms;
@@ -340,9 +350,16 @@ void Server::infoAllServerClients( std::string msg )
 Client	*Server::getClientNickName( std::string NickName )
 {
 	std::vector<Client>::iterator it = _clients.begin();
+	std::cout << "que passaaaa" << std::endl;
 	for (; it != _clients.end(); ++it)
+	{
 		if ((*it).getNickName() == NickName)
+		{
+			std::cout << "lo encuentras" << std::endl;
 			return &(*it);
+		}	
+	}
+	std::cout << "nothing encuentras" << std::endl;
 	return NULL;
 }
 
@@ -360,4 +377,31 @@ bool	Server::getIsNickNameInUse( std::string NickName )
 		}
 	}
 	return false;
+}
+
+Channel		*Server::findChannel( std::string nameChannel )
+{
+	for (std::vector<Channel>::iterator it = _channels.begin(); it != _channels.end(); it++)
+	{
+		if (it->getName() == nameChannel)
+		{
+			return &(*it);
+		}
+	}
+	return NULL;
+}
+
+void	Server::sendMsgToChannel( int fd, std::string msg, Channel *channel )
+{
+	Client	*cli;
+	std::vector<std::string> clients = channel->getClients(); //vector con todos los clientes que pertenecen a ese canal
+
+	for ( size_t i = 0; i < clients.size(); i++ )
+	{
+		cli = getClientNickName(clients[i]);
+		if (cli && cli->getFd() != fd) // clientes que no han enviado el msg
+		{
+			cli->addBuffer( msg );
+		} 
+ 	}
 }
