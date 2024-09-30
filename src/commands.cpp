@@ -217,7 +217,7 @@ void Server::_handleJoin(Client *cli, std::vector<std::string> params)
 {
 	if (cli->getStatus() != DONE)
 	{
-		std::cout << "User not registred!" <<std::endl; 
+		std::cout << "User not registred!" << std::endl; 
 		cli->addBuffer("User not registred!\r\n");
 	}
 	else
