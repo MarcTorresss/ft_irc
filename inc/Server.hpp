@@ -43,7 +43,6 @@ public:
 	Server();
 	Server( int port, std::string pass );
 	~Server();
-
 	// static void signalHandler(int signum);
 	void		createSocket();
 	void 		loop();
@@ -59,6 +58,7 @@ public:
   	void		disconnectClient(Client *client, std::string msg, bool sendmsg);
 	void		infoAllServerClients( std::string msg );
 	Client		*getClientNickName( std::string NickName );
+	bool		getIsNickNameInUse( std::string NickName );
 	void		handleConnection(Client *client);
 
 	//TO DO

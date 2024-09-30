@@ -283,6 +283,7 @@ void	Server::check_comand(Client *cli )
 				if (commands[i] == command)
 					break;
 			}
+			cli->cleanBuffer();
 			switch (i)
 			{
 				case 0: // NICK
@@ -347,4 +348,16 @@ Client	*Server::getClientNickName( std::string NickName )
 
 const std::vector<Channel>& Server::getChannels() const {
     return _channels;
+}
+
+bool	Server::getIsNickNameInUse( std::string NickName )
+{
+	for (std::vector<Client>::iterator i = _clients.begin(); i != _clients.end(); ++i)
+	{
+		if ((*i).getNickName() == NickName)
+		{
+			return true;
+		}
+	}
+	return false;
 }

@@ -2,38 +2,53 @@
 #include "Server.hpp"
 #include "Channel.hpp"
 
-void	Server::_setNickname(Client *cli, std::vector<std::string> params){
-	// NO PUEDEN AVER NICKS REPETIDOS
-	if (params.empty())
+void	Server::_setNickname(Client *cli, std::vector<std::string> params)
+{
+	if (cli->getStatus() == DONE)
 	{
-		// cli->setNickName(params[0]);
-		std::cout << "client " << cli->getFd() << " NICK is: " << cli->getNickName() << "-" << std::endl;
-	}
-	if (cli->getStatus() >= PASS){
-		std::cout << "NICK changed" << std::endl;
 		cli->setNickName(params[0]);
+		infoAllServerClients( std::string( "The new NickName is " + params[0] + "\r\n"));
 	}
-	else{
-		std::cout << ERR << "cannot change nick if password is not set" << std::endl;
-		//send message to client
+	else if (cli->getStatus() != NICK)
+	{
+		cli->addBuffer("451 * : USER not reregistred ( need PASS )\r\n");
 	}
-	cli->nextStatus();
+	else if (params.size() == 0)
+	{
+		cli->addBuffer(std::string("431 * :No set a NickName\r\n"));
+	}
+	else if (getIsNickNameInUse(params[0]))
+	{
+		cli->addBuffer(std::string("433 * " + params[0] + " :Nickname is already in use\r\n"));
+
+	}
+	else
+	{
+		std::cout << "NickName saved: " + params[0] << std::endl;
+		cli->setNickName(params[0]);
+		if (cli->getStatus() == NICK)
+			cli->nextStatus();
+	}
 }
 
-void	Server::_setUser(Client *cli, std::vector<std::string> params){
-	if (params.empty()){
-		std::cout << "client <" << cli->getFd() << "> USR is: " << cli->getUserName() << "-" << std::endl;
+void	Server::_setUser(Client *cli, std::vector<std::string> params)
+{
+	if (cli->getStatus() != USER)
+	{
+		cli->addBuffer("462 * : USER not reregistred ( need PASS and NICK )\r\n");
 	}
-	if (cli->getStatus() >= NICK){
-		std::cout << "USR changed" << std::endl;
-		cli->setUserName(params[0]);
+	else if (params.size() != 2)
+	{
+		cli->addBuffer(std::string("461 " + cli->getNickName() + " USER :Invalid parameters\r\n"));
 	}
-	else{
-		std::cout << ERR << "cannot change username if nickname is not set" << std::endl;
-		//send err message to client
+	else
+	{
+		cli->setUserName(params[1]);
+		std::cout << "User saved: " << params[1] << std::endl;
+		handleConnection(cli);
+		cli->nextStatus();
+		// se ara un join a un canal con el nombre del cliente de forma automatica
 	}
-	handleConnection(cli); //esto no va aqui
-	cli->nextStatus();
 }
 
 void	Server::_handlePrivmsg(Client *cli, std::vector<std::string> params)
@@ -270,9 +285,9 @@ void Server::_authenticatePassword(Client *cli, std::vector<std::string> params)
 	{
 		disconnectClient( cli, "462 * :" + params[0] + " may not reregister (need PASS state)\r\n", false );
 	}
-	else if (params[0].size() < 1)
+	else if (params.size() != 1)
 	{
-		cli->addBuffer("461 " + cli->getNickName() + " PASS :Parameters missing\r\n");
+		cli->addBuffer("461 " + cli->getNickName() + " PASS :Incorrect parameters\r\n");
 	}
 	else if (params[0] != _password)
 	{
@@ -280,6 +295,7 @@ void Server::_authenticatePassword(Client *cli, std::vector<std::string> params)
 	}
 	else
 	{
+		std::cout << "Correct Password: " + params[0] + "\r\n";
 		cli->nextStatus();
 	}
 }
