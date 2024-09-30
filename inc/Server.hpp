@@ -52,7 +52,7 @@ public:
 
 	void 		closeFds();
 	void 		clearClients(int fd);
-	int			getChannelIndex(); //DEBE RETORNAR EL INDICE DEL ARRAY DEL CANAL DONDE SE HA ENVIADO EL MENSAJE
+	int			getChannelIndex( std::string channelName );
 	void 		addChannel(Client *cli, const std::string& channelName, const std::string& password);
 	bool 		validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password);
   	void		disconnectClient(Client *client, std::string msg, bool sendmsg);
@@ -61,15 +61,12 @@ public:
 	bool		getIsNickNameInUse( std::string NickName );
 	void		handleConnection(Client *client);
 
-	//TO DO
-	bool		isChannel( std::string nameChannel );
 	Channel		*findChannel( std::string nameChannel );
-	Client		*findClient( std::string nick );
-	void		broadcastMessage( Client cli , std::string message);
+	void		sendMsgToChannel( int fd, std::string msg, Channel *channel );
 
 	//Debugging
-	const std::vector<Channel>& getChannels() const;
-	void getChannelsList() const;
+	const		std::vector<Channel>& getChannels() const;
+	void		getChannelsList() const;
 };
 
 #endif

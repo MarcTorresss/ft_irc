@@ -176,6 +176,16 @@ std::vector< std::string >	Channel::getClients()
 
 void Channel::setName(std::string name){_channelName = name;}
 
+std::string	Channel::getTopic()
+{
+	return _channelTopic;
+}
+
+bool	Channel::istopiclock( void )
+{
+	return _adminTopic;
+}
+
 Channel::~Channel()
 {
 
