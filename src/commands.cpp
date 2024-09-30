@@ -37,7 +37,7 @@ void	Server::_setUser(Client *cli, std::vector<std::string> params)
 	{
 		cli->addBuffer("462 * : USER not reregistred ( need PASS and NICK )\r\n");
 	}
-	else if (params.size() != 2)
+	else if (params.size() < 4)
 	{
 		cli->addBuffer(std::string("461 " + cli->getNickName() + " USER :Invalid parameters\r\n"));
 	}
