@@ -39,6 +39,9 @@
 #define ERR_NOCHANEL "403 " + params[0] + " " + cli->getNickName() + " :Channel not found\r\n" // Interactuar con un channel que no existe
 #define MSG_TOPIC332 "332 " + params[0] + " :Current topic is: " + channel->getTopic() + "\r\n"
 #define ERR_UNKCMD421 "421 " + cli->getNickName() + " :Unknown command or invalid parameters\r\n"
+#define ERR_NONICK432 "431 * :No nickname given for WHOIS\r\n"
+#define RES_WHOIS311 ":localhost 311 " + cli->getNickName() + " " + targetClient->getNickName() + " " + targetClient->getUserName() + " " + targetClient->getIpAdd() + " * :" + targetClient->getNickName() + "\r\n"
+#define END_WHOIS318 ":localhost 318 " + cli->getNickName() + " " + targetNick + " :End of /WHOIS list\r\n"
 
 enum _statusClient
 {

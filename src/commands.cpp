@@ -329,8 +329,25 @@ void Server::_authenticatePassword(Client *cli, std::vector<std::string> params)
 
 void	Server::_handleWhoIs(Client *cli, std::vector<std::string> params)
 {
-	(void) cli;
-	(void) params;
+    if (params.size() < 1) {
+        cli->addBuffer(ERR_NONICK432);
+        return;
+    }
+
+    std::string targetNick = params[0];
+    Client *targetClient = getClientNickName(targetNick);
+
+    if (targetClient == NULL) {
+        // If the target client doesn't exist, send error
+        cli->addBuffer(ERR_NICKN401);
+        return;
+    }
+
+    // Send WHOIS information
+    cli->addBuffer(RES_WHOIS311);
+
+    // End of WHOIS list
+    cli->addBuffer(END_WHOIS318);
 }
 
 bool Server::validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password) {
