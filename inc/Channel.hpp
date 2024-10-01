@@ -33,11 +33,11 @@ public:
 	bool	isInvite( Client *client );
 
 	void	addAdmin( Client *client, std::string target );
-	void	addInvite( Client *client, std::string target );
+	void	addInvite( std::string target );
 	void	addClient( Client *client);
 	void	removeAdmin( Client *client, std::string target );
 	void	removeInvite( Client *client, std::string target );
-	void	removeClient(Client *client, std::string target);
+	bool	removeClient(Client *client, std::string target);
 
 	std::string getName() const;
 	std::string getTopic();
@@ -52,6 +52,12 @@ public:
 	int		someAdmin( void );
 	void	setAdmin( std::string NickName );
 	bool	istopiclock( void );
+
+	const std::string& getPassword() const;
+    bool isAdminTopicEnabled() const;
+    bool isInviteOnly() const;
+    int getUserLimit() const;
+
 	std::vector< std::string >	getClients();
 };
 

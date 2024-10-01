@@ -58,29 +58,46 @@ void	Channel::removeAdmin( Client *client, std::string target )
 	_admins.erase(it);
 }
 
-void	Channel::removeClient(Client *client, std::string target){
-	if (!isAdmin( client ))
-		throw std::runtime_error("Not admin");
-	if (!isClient(client))
-		throw std::runtime_error("That user is not connected to the channel");
-	unsigned long i = 0;
-	for (i = 0; i < _clients.size(); ++i){
-		if (_clients[i] == target)
-			break;
+bool Channel::removeClient(Client *client, std::string target)
+{
+    if (!isAdmin(client))
+	{
+        throw std::runtime_error("Not admin");
 	}
-	std::vector< std::string>::iterator it = ( _clients.begin() + i );
-	_clients.erase(it);
+    if (!isClient(client))
+	{
+        throw std::runtime_error("That user is not connected to the channel");
+	}
+    unsigned long i = 0;
+    for (i = 0; i < _clients.size(); ++i)
+	{
+        if (_clients[i] == target)
+            break;
+    }
+    if (i < _clients.size())
+	{
+        std::vector<std::string>::iterator it = (_clients.begin() + i);
+        _clients.erase(it);
+        return true;
+    }
+    return false;
 }
 
-void	Channel::addInvite( Client *client, std::string target )
+void	Channel::addInvite( std::string target )
 {
-	if (!isAdmin( client ))
-		throw std::runtime_error("Not admin");
 	_invites.push_back(target);
 }
 
 bool	Channel::isClient( Client *client )
 {
+	if (client == NULL) {
+        std::cerr << "Error: Client is NULL" << std::endl;
+        return false;
+    }
+    if (_clients.empty()) {
+        std::cerr << "Warning: No admins in the channel" << std::endl;
+        return false;
+    }
 	std::vector< std::string >::iterator it;
     for (it = _clients.begin(); it != _clients.end(); ++it)
 	{
@@ -92,12 +109,20 @@ bool	Channel::isClient( Client *client )
 
 bool	Channel::isAdmin( Client *client )
 {
-	std::vector< std::string >::iterator it;
-    for (it = _admins.begin(); it != _admins.end(); ++it)
+	if (client == NULL) {
+        std::cerr << "Error: Client is NULL" << std::endl;
+        return false;
+    }
+    /*if (_admins.empty()) {
+        std::cerr << "Warning: No admins in the channel" << std::endl;
+        return false;
+    }*/
+	/*std::vector< std::string >::iterator it;
+    for (it = _admins.begin(); it != _admins.end(); it++)
 	{
     	if (*it == client->getNickName())
 			return true;
-	}
+	}*/
 	return false;
 }
 
@@ -138,9 +163,9 @@ void Channel::setTopicAdmin(Client *client){
 }
 
 void Channel::setInviteOnly(Client *client){
-	/*if (!isAdmin( client ))
+	if (!isAdmin( client ))
 		throw std::runtime_error("Not admin");
-	_inviteOnly = !_inviteOnly;*/
+	_inviteOnly = !_inviteOnly;
 	(void) client;
 }
 
@@ -184,6 +209,22 @@ std::string	Channel::getTopic()
 bool	Channel::istopiclock( void )
 {
 	return _adminTopic;
+}
+
+const std::string& Channel::getPassword() const {
+    return _channelPassword;
+}
+
+bool Channel::isAdminTopicEnabled() const {
+    return _adminTopic;
+}
+
+bool Channel::isInviteOnly() const {
+    return _inviteOnly;
+}
+
+int Channel::getUserLimit() const {
+    return _userLimit;
 }
 
 Channel::~Channel()
