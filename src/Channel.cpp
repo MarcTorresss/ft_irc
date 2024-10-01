@@ -58,18 +58,29 @@ void	Channel::removeAdmin( Client *client, std::string target )
 	_admins.erase(it);
 }
 
-void	Channel::removeClient(Client *client, std::string target){
-	if (!isAdmin( client ))
-		throw std::runtime_error("Not admin");
-	if (!isClient(client))
-		throw std::runtime_error("That user is not connected to the channel");
-	unsigned long i = 0;
-	for (i = 0; i < _clients.size(); ++i){
-		if (_clients[i] == target)
-			break;
+bool Channel::removeClient(Client *client, std::string target)
+{
+    if (!isAdmin(client))
+	{
+        throw std::runtime_error("Not admin");
 	}
-	std::vector< std::string>::iterator it = ( _clients.begin() + i );
-	_clients.erase(it);
+    if (!isClient(client))
+	{
+        throw std::runtime_error("That user is not connected to the channel");
+	}
+    unsigned long i = 0;
+    for (i = 0; i < _clients.size(); ++i)
+	{
+        if (_clients[i] == target)
+            break;
+    }
+    if (i < _clients.size())
+	{
+        std::vector<std::string>::iterator it = (_clients.begin() + i);
+        _clients.erase(it);
+        return true;
+    }
+    return false;
 }
 
 void	Channel::addInvite( std::string target )

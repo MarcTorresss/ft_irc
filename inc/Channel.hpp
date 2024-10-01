@@ -37,7 +37,7 @@ public:
 	void	addClient( Client *client);
 	void	removeAdmin( Client *client, std::string target );
 	void	removeInvite( Client *client, std::string target );
-	void	removeClient(Client *client, std::string target);
+	bool	removeClient(Client *client, std::string target);
 
 	std::string getName() const;
 	std::string getTopic();

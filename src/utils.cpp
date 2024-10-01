@@ -54,10 +54,10 @@ void Server::getChannelsList() const {
         return;
     }
 
-    std::cout << "List of Channels: " << std::endl;
-    for (size_t i = 0; i < channels.size(); ++i) {
-        std::cout << "Channel " << i + 1 << ": " << std::endl;
-        std::cout << "  Name: " << channels[i].getName() << std::endl;
-        std::cout << "  Password: " << (channels[i].getPass().empty() ? "No password" : channels[i].getPass()) << std::endl;
-    }
+    // std::cout << "List of Channels: " << std::endl;
+    // for (size_t i = 0; i < channels.size(); ++i) {
+    //     std::cout << "Channel " << i + 1 << ": " << std::endl;
+    //     std::cout << "  Name: " << channels[i].getName() << std::endl;
+    //     std::cout << "  Password: " << (channels[i].getPass().empty() ? "No password" : channels[i].getPass()) << std::endl;
+    // }
 }

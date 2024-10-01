@@ -50,6 +50,18 @@ void	Server::_setUser(Client *cli, std::vector<std::string> params)
 	}
 }
 
+std::vector<std::string> splitString(const std::string& input, char delimiter)
+{
+    std::istringstream stream(input);
+    std::string token;
+    std::vector<std::string> ret;
+
+    while (std::getline(stream, token, delimiter))
+        ret.push_back(token);
+    
+    return ret;
+}
+
 void	Server::_handlePrivmsg(Client *cli, std::vector<std::string> params)
 {
 	if (cli->getStatus() != DONE)
@@ -100,10 +112,39 @@ void	Server::_handlePrivmsg(Client *cli, std::vector<std::string> params)
 		}
 	}
 }
+// /KICK <channel> <user> [<reason>]
+void Server::_handleKick(Client *cli, std::vector<std::string> params)
+{
+    if (params.size() < 2) {
+        cli->addBuffer(ERR_PARAM461);
+        return;
+    }
+    std::vector<std::string> channels = splitString(params[0], ',');
+    std::vector<std::string> users = splitString(params[1], ',');
+    std::string reason = (params.size() >= 3) ? params[2] : "No reason specified";
 
-void	Server::_handleKick(Client *cli, std::vector<std::string> params){
-	(void) cli;
-	(void) params;
+    for (size_t i = 0; i < channels.size(); i++)
+	{
+        Channel *channel = findChannel(channels[i]);
+        if (!channel) {
+            cli->addBuffer(std::string(ERR_NOCHANEL));
+            return;
+        }
+        if (!channel->isAdmin(cli)) {
+            cli->addBuffer(std::string(ERR_OPNEEDED));
+            return;
+        }
+        if (i >= users.size()) {
+            cli->addBuffer(std::string("441 " + cli->getNickName() + " :No user specified\r\n"));
+            return;
+        }
+        if (!channel->removeClient(cli , users[i])) {
+            cli->addBuffer(std::string("441 " + cli->getNickName() + " " + users[i] + " " + channels[i] + " :They aren't on that channel\r\n"));
+            return;
+        }
+		std::string kickMsg = ":" + users[i] + " KICK " + params[0] + " " + cli->getNickName() + " :" + reason + "\r\n";
+		infoAllServerClients(kickMsg);
+    }
 }
 
 void	Server::_handleInvite(Client *cli, std::vector<std::string> params)
@@ -268,18 +309,6 @@ void Server::addChannel(Client *cli, const std::string& channelName, const std::
     getChannelsList();
 }
 
-std::vector<std::string> splitString(const std::string& input, char delimiter)
-{
-    std::istringstream stream(input);
-    std::string token;
-    std::vector<std::string> ret;
-
-    while (std::getline(stream, token, delimiter))
-        ret.push_back(token);
-    
-    return ret;
-}
-
 void Server::_handleJoin(Client *cli, std::vector<std::string> params)
 {
 	if (cli->getStatus() != DONE)
@@ -295,12 +324,11 @@ void Server::_handleJoin(Client *cli, std::vector<std::string> params)
 		std::istringstream passchanel(params[1]);
 		std::string channIn, keysIn;
 
-		std::cout << params[0] << std::endl;
+		// std::cout << params[0] << std::endl;
 		std::getline(namechanel, channIn, ' ');
-		std::cout << "Channels: " << channIn << std::endl;
+		// std::cout << "Channels: " << channIn << std::/endl;
 		std::getline(passchanel, keysIn);
-		std::cout << "Keys: "<< keysIn << std::endl;
-
+		// std::cout << "Keys: "<< keysIn << std::endl;
 
 		if (channIn.empty() || keysIn.empty())
 		{
@@ -322,11 +350,6 @@ void Server::_handleJoin(Client *cli, std::vector<std::string> params)
 			const std::string& channelKey = channelKeyPairs[i].second;
 			validateChannelPassword(cli, channelName, channelKey);
 		}
-		//parse channel and pass
-		//if channel exists
-			//check password
-				//join client
-		//else addChannel
 	}
 }
 
@@ -362,7 +385,7 @@ void	Server::_handleQuit(Client *cli, std::vector<std::string> params)
 	disconnectClient(cli, params[0] , 0);
 }
 
-bool Server::validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password) {
+bool Server::validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password ) {
     
     for (size_t i = 0; i < _channels.size(); i++) {
         if (_channels[i].getName() == channelName) {
