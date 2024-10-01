@@ -72,10 +72,8 @@ void	Channel::removeClient(Client *client, std::string target){
 	_clients.erase(it);
 }
 
-void	Channel::addInvite( Client *client, std::string target )
+void	Channel::addInvite( std::string target )
 {
-	if (!isAdmin( client ))
-		throw std::runtime_error("Not admin");
 	_invites.push_back(target);
 }
 

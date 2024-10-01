@@ -33,7 +33,7 @@ public:
 	bool	isInvite( Client *client );
 
 	void	addAdmin( Client *client, std::string target );
-	void	addInvite( Client *client, std::string target );
+	void	addInvite( std::string target );
 	void	addClient( Client *client);
 	void	removeAdmin( Client *client, std::string target );
 	void	removeInvite( Client *client, std::string target );
@@ -52,6 +52,7 @@ public:
 	int		someAdmin( void );
 	void	setAdmin( std::string NickName );
 	bool	istopiclock( void );
+
 	std::vector< std::string >	getClients();
 };
 

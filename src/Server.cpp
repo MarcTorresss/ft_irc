@@ -192,6 +192,7 @@ void	Server::receiveNewData(int fd)
     else if (bytes == 0)
 	{
         std::cout << RED << "Cliente <" << fd << "> Desconectado" << WHI << std::endl;
+		disconnectClient( cli, std::string("a") , 0);
         clearClients(fd);
         close(fd);
     }
@@ -329,9 +330,9 @@ void	Server::check_comand(Client *cli )
 				case 10: // WHOIS
 					_handleWhoIs(cli, params);
 					break;
-				// case 11: // QUIT
-					//_quitChannel(cli, params);
-					// break;
+				case 11: // QUIT
+					_handleQuit(cli, params);
+					break;
 				default:
 					cli->addBuffer(ERR_UNKCMD421);
 					std::cout << "Comando no reconocido: " << command << std::endl;
@@ -350,16 +351,13 @@ void Server::infoAllServerClients( std::string msg )
 Client	*Server::getClientNickName( std::string NickName )
 {
 	std::vector<Client>::iterator it = _clients.begin();
-	std::cout << "que passaaaa" << std::endl;
 	for (; it != _clients.end(); ++it)
 	{
 		if ((*it).getNickName() == NickName)
 		{
-			std::cout << "lo encuentras" << std::endl;
 			return &(*it);
 		}	
 	}
-	std::cout << "nothing encuentras" << std::endl;
 	return NULL;
 }
 

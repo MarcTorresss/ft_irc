@@ -84,10 +84,8 @@ void	Server::_handlePrivmsg(Client *cli, std::vector<std::string> params)
 		{
 			if (Channel *channel = findChannel(name))
 			{
-				std::cout << "entra" << std::endl;
 				if (channel->isClient(cli))
 				{
-					std::cout << "entra" << std::endl;
 					sendMsgToChannel( client->getFd(), std::string(":" + client->getNickName() + " PRIVMSG " + name + " :" + params[1] + " \r\n"), channel );
 				}
 				else
@@ -110,19 +108,45 @@ void	Server::_handleKick(Client *cli, std::vector<std::string> params){
 
 void	Server::_handleInvite(Client *cli, std::vector<std::string> params)
 {
-	(void) params;
-	if (cli->getStatus() != DONE)
+ 	if (params.size() < 2)
+    {
+        cli->addBuffer(std::string(ERR_PARAM461));
+        return;
+    }
+    Channel *tChannel = findChannel(params[1]);
+    if (!tChannel)
+    {
+        cli->addBuffer(std::string(ERR_NOCHANEL));
+        return;
+    }
+    if (!tChannel->isClient(cli))
+    { 
+        cli->addBuffer(std::string(ERR_CHANN442));
+        return;
+    }
+    if (!tChannel->isAdmin(cli))
+    {
+        cli->addBuffer(std::string(ERR_OPNEEDED));
+        return;
+    }
+    Client *target = getClientNickName(params[0]);
+    if (!target)
+    {
+        cli->addBuffer(std::string(ERR_NICKN401));
+        return;
+    }
+    if (tChannel->isClient(target))
+    {
+        cli->addBuffer(std::string(ERR_INCHA443));
+        return;
+    }
+	tChannel->addInvite(target->getNickName());
+    if (target)
 	{
-		std::cout << "User not registred!" <<std::endl; 
-		cli->addBuffer("User not registred!\r\n");
+        std::string notification = ":" + cli->getNickName() + " INVITE " + target->getNickName() + " :" + tChannel->getName() + "\r\n";
+        target->addBuffer(notification);
 	}
-	// else
-	// {
-		// int channelIdx = getChannelIndex();
-		//does the client need to be connected to server to be invited??
-		// _channels[channelIdx].addInvite(cli, params[0]);
-		//2. notify user?
-	// }
+    cli->addBuffer(std::string("341 * " + params[0] + " " + params[1] + "\r\n"));
 }
 
 void	Server::_handleTopic(Client *cli, std::vector<std::string> params)
@@ -331,6 +355,11 @@ void	Server::_handleWhoIs(Client *cli, std::vector<std::string> params)
 {
 	(void) cli;
 	(void) params;
+}
+
+void	Server::_handleQuit(Client *cli, std::vector<std::string> params)
+{
+	disconnectClient(cli, params[0] , 0);
 }
 
 bool Server::validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password) {
