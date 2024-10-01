@@ -30,7 +30,7 @@ private:
     void	_sendPing(Client *cli, std::vector<std::string> params);
     void	_handleCapabilities(Client *cli, std::vector<std::string> params);
     void	_handleQuit(Client *cli, std::vector<std::string> params);
-    void	_handleJoin(Client *cli, std::vector<std::string> params);
+	void	_handleJoin(Client *cli, std::vector<std::string> params);
     void	_handlePrivmsg(Client *cli, std::vector<std::string> params);
     void	_handleKick(Client *cli, std::vector<std::string> params);
     void	_handleInvite(Client *cli, std::vector<std::string> params);
@@ -54,7 +54,7 @@ public:
 	void 		clearClients(int fd);
 	int			getChannelIndex( std::string channelName );
 	void 		addChannel(Client *cli, const std::string& channelName, const std::string& password);
-	bool 		validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password);
+	bool		validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password);
   	void		disconnectClient(Client *client, std::string msg, bool sendmsg);
 	void		infoAllServerClients( std::string msg );
 	Client		*getClientNickName( std::string NickName );

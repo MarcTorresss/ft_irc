@@ -46,7 +46,6 @@ void	Server::_setUser(Client *cli, std::vector<std::string> params)
 		std::cout << "User saved: " << params[1] << std::endl;
 		handleConnection(cli);
 		cli->nextStatus();
-		// se ara un join a un canal con el nombre del cliente de forma automatica
 	}
 }
 
@@ -299,7 +298,8 @@ void	Server::_handlePing(Client *cli, std::vector<std::string> params)
 	}
 }
 
-void Server::addChannel(Client *cli, const std::string& channelName, const std::string& password) {
+void Server::addChannel(Client *cli, const std::string& channelName, const std::string& password)
+{
     Channel newChannel(cli, channelName, password);
     _channels.push_back(newChannel);
     getChannelsList();
@@ -381,22 +381,23 @@ void	Server::_handleQuit(Client *cli, std::vector<std::string> params)
 	disconnectClient(cli, params[0] , 0);
 }
 
-bool Server::validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password ) {
-    
+bool Server::validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password )
+{
     for (size_t i = 0; i < _channels.size(); i++) {
-        if (_channels[i].getName() == channelName) {
+        if (_channels[i].getName() == channelName) 
+		{
             // If the channel exists, validate the password
             if (_channels[i].getPass() == password) {
                 std::cout << "Password is valid for channel: " << channelName << std::endl;
                 _channels[i].addClient(cli);
                 return true;
-            } else {
-                std::cout << "Invalid password for channel: " << channelName << std::endl;
-                return false;
-            }
+        	} else {
+            std::cout << "Invalid password for channel: " << channelName << std::endl;
+            return false;
+			}
         }
     }
-	std::string channelAdded = "Channel " + channelName + " added!\r\n";
+    std::string channelAdded = "Channel " + channelName + " added!\r\n";
     send(cli->getFd(), channelAdded.c_str(), channelAdded.size(), 0);
     addChannel(cli, channelName, password);
     return true;
