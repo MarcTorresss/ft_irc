@@ -53,6 +53,11 @@ public:
 	void	setAdmin( std::string NickName );
 	bool	istopiclock( void );
 
+	const std::string& getPassword() const;
+    bool isAdminTopicEnabled() const;
+    bool isInviteOnly() const;
+    int getUserLimit() const;
+
 	std::vector< std::string >	getClients();
 };
 

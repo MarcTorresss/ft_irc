@@ -90,6 +90,14 @@ void	Channel::addInvite( std::string target )
 
 bool	Channel::isClient( Client *client )
 {
+	if (client == NULL) {
+        std::cerr << "Error: Client is NULL" << std::endl;
+        return false;
+    }
+    if (_clients.empty()) {
+        std::cerr << "Warning: No admins in the channel" << std::endl;
+        return false;
+    }
 	std::vector< std::string >::iterator it;
     for (it = _clients.begin(); it != _clients.end(); ++it)
 	{
@@ -101,12 +109,20 @@ bool	Channel::isClient( Client *client )
 
 bool	Channel::isAdmin( Client *client )
 {
-	std::vector< std::string >::iterator it;
-    for (it = _admins.begin(); it != _admins.end(); ++it)
+	if (client == NULL) {
+        std::cerr << "Error: Client is NULL" << std::endl;
+        return false;
+    }
+    /*if (_admins.empty()) {
+        std::cerr << "Warning: No admins in the channel" << std::endl;
+        return false;
+    }*/
+	/*std::vector< std::string >::iterator it;
+    for (it = _admins.begin(); it != _admins.end(); it++)
 	{
     	if (*it == client->getNickName())
 			return true;
-	}
+	}*/
 	return false;
 }
 
@@ -147,9 +163,9 @@ void Channel::setTopicAdmin(Client *client){
 }
 
 void Channel::setInviteOnly(Client *client){
-	/*if (!isAdmin( client ))
+	if (!isAdmin( client ))
 		throw std::runtime_error("Not admin");
-	_inviteOnly = !_inviteOnly;*/
+	_inviteOnly = !_inviteOnly;
 	(void) client;
 }
 
@@ -193,6 +209,22 @@ std::string	Channel::getTopic()
 bool	Channel::istopiclock( void )
 {
 	return _adminTopic;
+}
+
+const std::string& Channel::getPassword() const {
+    return _channelPassword;
+}
+
+bool Channel::isAdminTopicEnabled() const {
+    return _adminTopic;
+}
+
+bool Channel::isInviteOnly() const {
+    return _inviteOnly;
+}
+
+int Channel::getUserLimit() const {
+    return _userLimit;
 }
 
 Channel::~Channel()

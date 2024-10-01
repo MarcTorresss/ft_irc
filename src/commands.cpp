@@ -233,29 +233,25 @@ void	Server::_handleTopic(Client *cli, std::vector<std::string> params)
 	}
 }
 
-void	Server::_handleMode(Client *cli, std::vector<std::string> params){
-	/*if (cli->getStatus() != DONE)
+void	Server::_handleMode(Client *cli, std::vector<std::string> params)
+{
+	if (cli->getStatus() != DONE)
 	{
 		std::cout << "User not registred!" <<std::endl; 
 		cli->addBuffer("User not registred!\r\n");
 	}
 	else
-	{*/
+	{
 		// for (size_t i = 0; i < params.size(); ++i) {
 		// 	std::cout << "Param " << i << ": " << params[i] << std::endl;
 		// }
 		std::string type = params[params.size() - 1];
-		// std::cout << type << std::endl;
 		if (params.empty()){
 			std::cout << "the current channel modes are [" << "]" <<std::endl; //print los channel modes
 		}
 		std::string modes[] = {"+i","t","k","o","l"};
 		int i = 0;
 		for (i = 0; i < 5; ++i){
-			// std::cout << params[params.size() - 1] << std::endl;
-			// for (size_t i = 0; i < params.size(); ++i) {
-			// 	std::cout << "Param " << i << ": " << params[i] << std::endl;
-			// }
 			// if (modes[i] == params[params.size() - 1])
 			// 	break;
 			if (modes[i] == type)
@@ -264,19 +260,19 @@ void	Server::_handleMode(Client *cli, std::vector<std::string> params){
 		try{
 			switch (i) //DONE
 			{
-				case 0: //i
+				case 0: //MODE #canal +i
 					_channels[0].setInviteOnly(cli);
 					break;
-				case 1: //t
+				case 1: //MODE #channel +t
 					_channels[0].setTopicAdmin(cli);
 					break;
-				case 2: //k
+				case 2: //MODE #canal +k password
 					_channels[0].setPassword(cli,params[0]);
 					break;
-				case 3: //o
+				case 3: //MODE #canal +o <nickname>
 					_channels[0].addAdmin(cli,params[0]);
 					break;
-				case 4: //l
+				case 4: //MODE #canal +l 50
 					_channels[0].setUserLimit(cli,params[0]);
 					break;
 				default:
@@ -286,7 +282,7 @@ void	Server::_handleMode(Client *cli, std::vector<std::string> params){
 		}catch(std::exception &e){
 			std::cout << ERR << e.what() <<std::endl;
 		}
-	//}
+	}
 }
 
 void	Server::_handlePing(Client *cli, std::vector<std::string> params)
