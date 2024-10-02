@@ -304,7 +304,7 @@ void	Server::check_comand(Client *cli )
 					_setUser(cli, params);
 					break;
 				case 2: // JOIN
-					_handleJoin(cli, params);
+					_handleJoin(cli, params, 0);
 					break;
 				case 3: // PRIVMSG
 					_handlePrivmsg(cli, params);

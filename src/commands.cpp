@@ -47,6 +47,10 @@ void	Server::_setUser(Client *cli, std::vector<std::string> params)
 		handleConnection(cli);
 		cli->nextStatus();
 	}
+	std::vector< std::string > chanelUserName;
+	chanelUserName.push_back( "#" + params[0]);
+	chanelUserName.push_back("1");
+	_handleJoin( cli, chanelUserName , 1);
 }
 
 std::vector<std::string> splitString(const std::string& input, char delimiter)
@@ -305,8 +309,12 @@ void Server::addChannel(Client *cli, const std::string& channelName, const std::
     getChannelsList();
 }
 
-void Server::_handleJoin(Client *cli, std::vector<std::string> params)
+void Server::_handleJoin(Client *cli, std::vector<std::string> params, bool UserChannel )
 {
+	std::cout << " PARAMS " << std::endl;
+	for (size_t i = 0; i < params.size(); ++i) {
+        std::cout << " params " << i << " " << params[i] << std::endl;
+    }
 	if (cli->getStatus() != DONE)
 	{
 		std::cout << "User not registred!" << std::endl; 
@@ -344,7 +352,7 @@ void Server::_handleJoin(Client *cli, std::vector<std::string> params)
 			channelKeyPairs.push_back(std::make_pair(channels[i], keys[i]));
 			const std::string& channelName = channelKeyPairs[i].first;
 			const std::string& channelKey = channelKeyPairs[i].second;
-			validateChannelPassword(cli, channelName, channelKey);
+			validateChannelPassword(cli, channelName, channelKey, UserChannel);
 		}
 	}
 }
@@ -381,7 +389,7 @@ void	Server::_handleQuit(Client *cli, std::vector<std::string> params)
 	disconnectClient(cli, params[0] , 0);
 }
 
-bool Server::validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password )
+bool Server::validateChannelPassword(Client *cli, const std::string& channelName, const std::string& password, bool UserChannel)
 {
     for (size_t i = 0; i < _channels.size(); i++) {
         if (_channels[i].getName() == channelName) 
@@ -400,6 +408,10 @@ bool Server::validateChannelPassword(Client *cli, const std::string& channelName
     std::string channelAdded = "Channel " + channelName + " added!\r\n";
     send(cli->getFd(), channelAdded.c_str(), channelAdded.size(), 0);
     addChannel(cli, channelName, password);
+	if (UserChannel)
+	{
+		_channels[0].addClient(cli);
+	}
     return true;
 }
 
