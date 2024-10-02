@@ -1,6 +1,9 @@
 #include "Channel.hpp"
-
-Channel::Channel( Client *client,  std::string name, std::string pass)
+Channel::Channel()
+{
+	std::cout << "DEF CONSTRUCTOR" << std::endl;
+}
+Channel::Channel( Client *client,  std::string name, std::string pass) : _admins()
 {
 	_userLimit = 5;
 	_channelName = name;
@@ -8,6 +11,7 @@ Channel::Channel( Client *client,  std::string name, std::string pass)
 	_admins.push_back(client->getNickName());
 	_clients.push_back(client->getNickName());
 }
+
 std::string Channel::getName() const
 {
 	return _channelName;
@@ -23,6 +27,7 @@ void	Channel::addClient( Client *client )
 		throw std::runtime_error("Channel is full!");
 	/*if (_inviteOnly && !isInvite(client))
 		throw std::runtime_error("");*/
+	std::cout << "AAAAA" << std::endl;
 	_clients.push_back(client->getNickName());
 }
 
@@ -113,16 +118,16 @@ bool	Channel::isAdmin( Client *client )
         std::cerr << "Error: Client is NULL" << std::endl;
         return false;
     }
-    /*if (_admins.empty()) {
+    if (_admins.empty()) {
         std::cerr << "Warning: No admins in the channel" << std::endl;
         return false;
-    }*/
-	/*std::vector< std::string >::iterator it;
-    for (it = _admins.begin(); it != _admins.end(); it++)
+    }
+	std::vector< std::string >::iterator it;
+   	for (it = _admins.begin(); it != _admins.end(); it++)
 	{
     	if (*it == client->getNickName())
 			return true;
-	}*/
+	}
 	return false;
 }
 
@@ -157,6 +162,7 @@ void	Channel::setTopic( Client *client, std::string topic )
 }
 
 void Channel::setTopicAdmin(Client *client){
+	(void) client;
 	if (!isAdmin( client ))
 		throw std::runtime_error("Not admin");
 	_adminTopic = !_adminTopic;
