@@ -182,7 +182,6 @@ void	Server::receiveNewData(int fd)
 
     memset(buff, 0, BUFF_SIZE);
     ssize_t bytes = recv(fd, buff, BUFF_SIZE - 1, 0);
-
     if (bytes < 0)
 	{
         std::cerr << "Error en recv para el cliente <" << fd << ">" << std::endl;
@@ -216,7 +215,6 @@ void	Server::check_comand(Client *cli )
 	if (cli->getinBuffer().find(std::string("\r\n")) != std::string::npos
 		|| cli->getinBuffer().find(std::string("\n")) != std::string::npos)
 	{
-
 		std::string receivedData(cli->getinBuffer());
 		cli->cleaninBuffer();
     	std::istringstream iss(receivedData);
