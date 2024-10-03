@@ -46,11 +46,11 @@ void	Server::_setUser(Client *cli, std::vector<std::string> params)
 		std::cout << "User saved: " << params[1] << std::endl;
 		handleConnection(cli);
 		cli->nextStatus();
+		std::vector< std::string > chanelUserName;
+		chanelUserName.push_back( "#" + params[0]);
+		chanelUserName.push_back("1");
+		_handleJoin( cli, chanelUserName , 1);
 	}
-	std::vector< std::string > chanelUserName;
-	chanelUserName.push_back( "#" + params[0]);
-	chanelUserName.push_back("1");
-	_handleJoin( cli, chanelUserName , 1);
 }
 
 std::vector<std::string> splitString(const std::string& input, char delimiter)
@@ -311,11 +311,11 @@ void Server::addChannel(Client *cli, const std::string& channelName, const std::
 
 void Server::_handleJoin(Client *cli, std::vector<std::string> params, bool UserChannel )
 {
-	std::cout << " PARAMS " << std::endl;
-	for (size_t i = 0; i < params.size(); ++i) {
-        std::cout << " params " << i << " " << params[i] << std::endl;
-    }
-	if (cli->getStatus() != DONE)
+	// std::cout << " PARAMS " << std::endl;
+	// for (size_t i = 0; i < params.size(); ++i) {
+    //     std::cout << " params " << i << " " << params[i] << std::endl;
+    // }
+	if (cli->getStatus() != DONE && !UserChannel)
 	{
 		std::cout << "User not registred!" << std::endl; 
 		cli->addBuffer("User not registred!\r\n");
