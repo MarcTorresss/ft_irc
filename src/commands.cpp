@@ -350,6 +350,8 @@ void Server::_handleJoin(Client *cli, std::vector<std::string> params, bool User
 			const std::string& channelKey = channelKeyPairs[i].second;
 
 			if (validateChannelPassword(cli, channelName, channelKey, UserChannel)) {
+				std::string joinMessage = ":" + cli->getNickName() + " JOIN " + channelName + "\r\n";
+				send(cli->getFd(), joinMessage.c_str(), joinMessage.size(), 0);
 				// Notificar a otros clientes en el canal
 				std::string notification = ":" + cli->getNickName() + " has joined " + channelName + "\r\n";
 				infoAllServerClients(notification);
