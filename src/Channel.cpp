@@ -27,7 +27,6 @@ void	Channel::addClient( Client *client )
 		throw std::runtime_error("Channel is full!");
 	/*if (_inviteOnly && !isInvite(client))
 		throw std::runtime_error("");*/
-	std::cout << "AAAAA" << std::endl;
 	_clients.push_back(client->getNickName());
 }
 

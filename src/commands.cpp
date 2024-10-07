@@ -43,7 +43,7 @@ void	Server::_setUser(Client *cli, std::vector<std::string> params)
 	else
 	{
 		cli->setUserName(params[1]);
-		std::cout << "User saved: " << params[1] << std::endl;
+		std::cout << "User saved: " << params[0] << std::endl;
 		handleConnection(cli);
 		cli->nextStatus();
 		std::vector< std::string > chanelUserName;
@@ -264,19 +264,20 @@ void	Server::_handleMode(Client *cli, std::vector<std::string> params)
 			switch (i) //DONE
 			{
 				case 0: //MODE #canal +i
+					getChannelsList();
 					_channels[0].setInviteOnly(cli);
 					break;
 				case 1: //MODE #channel +t
-					_channels[0].setTopicAdmin(cli);
+					// _channels[0].setTopicAdmin(cli);
 					break;
 				case 2: //MODE #canal +k password
-					_channels[0].setPassword(cli,params[0]);
+					// _channels[0].setPassword(cli,params[0]);
 					break;
 				case 3: //MODE #canal +o <nickname>
-					_channels[0].addAdmin(cli,params[0]);
+					// _channels[0].addAdmin(cli,params[0]);
 					break;
 				case 4: //MODE #canal +l 50
-					_channels[0].setUserLimit(cli,params[0]);
+					// _channels[0].setUserLimit(cli,params[0]);
 					break;
 				default:
 					std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
@@ -306,56 +307,60 @@ void Server::addChannel(Client *cli, const std::string& channelName, const std::
 {
     Channel newChannel(cli, channelName, password);
     _channels.push_back(newChannel);
-    getChannelsList();
 }
 
-void Server::_handleJoin(Client *cli, std::vector<std::string> params, bool UserChannel )
+void Server::_handleJoin(Client *cli, std::vector<std::string> params, bool UserChannel)
 {
-	// std::cout << " PARAMS " << std::endl;
-	// for (size_t i = 0; i < params.size(); ++i) {
-    //     std::cout << " params " << i << " " << params[i] << std::endl;
-    // }
-	if (cli->getStatus() != DONE && !UserChannel)
-	{
-		std::cout << "User not registred!" << std::endl; 
-		cli->addBuffer("User not registred!\r\n");
-	}
-	else
-	{
-		//param format [#channel1,#channel2 key1,key2]
-		std::vector<std::pair<std::string, std::string> > channelKeyPairs;    std::vector<std::string> channels, keys;
+	if (cli->getStatus() != DONE && !UserChannel) {
+		std::cout << "User not registered!" << std::endl; 
+		cli->addBuffer("User not registered!\r\n");
+	} else {
+		// Param format: [#channel1,#channel2 key1,key2]
+		std::vector<std::pair<std::string, std::string> > channelKeyPairs;
+		std::vector<std::string> channels, keys;
 		std::istringstream namechanel(params[0]);
 		std::istringstream passchanel(params[1]);
 		std::string channIn, keysIn;
 
-		// std::cout << params[0] << std::endl;
 		std::getline(namechanel, channIn, ' ');
-		// std::cout << "Channels: " << channIn << std::/endl;
 		std::getline(passchanel, keysIn);
-		// std::cout << "Keys: "<< keysIn << std::endl;
 
-		if (channIn.empty() || keysIn.empty())
-		{
+		if (channIn.empty() || keysIn.empty()) {
 			std::cout << "Invalid JOIN format, #channel key or [#channel1,#channel2] [key1,key2]" << std::endl;
 			cli->addBuffer("Invalid JOIN format, #channel key or [#channel1,#channel2] [key1,key2]\r\n");
 			return;
 		}
+
 		channels = splitString(channIn, ',');
 		keys = splitString(keysIn, ',');
 
-		if (channels.size() != keys.size())
-			{std::cout << "Number of channels does not match number of keys" << std::endl; return;}   
-		for (size_t i = 0; i < channels.size(); i++)
-		{
-			if (channels[i].find("#") != 0)
-				{std::cout << "Invalid channel format. Channels must start with '#'." << std::endl; return;}
+		if (channels.size() != keys.size()) {
+			std::cout << "Number of channels does not match number of keys" << std::endl;
+			return;
+		}
+
+		for (size_t i = 0; i < channels.size(); i++) {
+			if (channels[i].find("#") != 0) {
+				std::cout << "Invalid channel format. Channels must start with '#'." << std::endl;
+				return;
+			}
+
 			channelKeyPairs.push_back(std::make_pair(channels[i], keys[i]));
 			const std::string& channelName = channelKeyPairs[i].first;
 			const std::string& channelKey = channelKeyPairs[i].second;
-			validateChannelPassword(cli, channelName, channelKey, UserChannel);
+
+			if (validateChannelPassword(cli, channelName, channelKey, UserChannel)) {
+				std::string joinMessage = ":" + cli->getNickName() + " JOIN " + channelName + "\r\n";
+				send(cli->getFd(), joinMessage.c_str(), joinMessage.size(), 0);
+
+				// Notificar a otros clientes en el canal
+				std::string notification = ":" + cli->getNickName() + " has joined " + channelName + "\r\n";
+				infoAllServerClients(notification);
+			}
 		}
 	}
 }
+
 
 void Server::_authenticatePassword(Client *cli, std::vector<std::string> params)
 {
@@ -380,25 +385,8 @@ void Server::_authenticatePassword(Client *cli, std::vector<std::string> params)
 
 void	Server::_handleWhoIs(Client *cli, std::vector<std::string> params)
 {
-    if (params.size() < 1) {
-        cli->addBuffer(ERR_NONICK432);
-        return;
-    }
-
-    std::string targetNick = params[0];
-    Client *targetClient = getClientNickName(targetNick);
-
-    if (targetClient == NULL) {
-        // If the target client doesn't exist, send error
-        cli->addBuffer(ERR_NICKN401);
-        return;
-    }
-
-    // Send WHOIS information
-    cli->addBuffer(RES_WHOIS311);
-
-    // End of WHOIS list
-    cli->addBuffer(END_WHOIS318);
+	(void) cli;
+	(void) params;
 }
 
 void	Server::_handleQuit(Client *cli, std::vector<std::string> params)
