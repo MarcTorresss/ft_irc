@@ -395,6 +395,7 @@ void	Server::sendMsgToChannel( int fd, std::string msg, Channel *channel )
 	for ( size_t i = 0; i < clients.size(); i++ )
 	{
 		cli = getClientNickName(clients[i]);
+		cli->cleanBuffer();
 		if (cli && cli->getFd() != fd) // clientes que no han enviado el msg
 		{
 			cli->addBuffer( msg );
