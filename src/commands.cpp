@@ -339,8 +339,10 @@ void Server::_handleJoin(Client *cli, std::vector<std::string> params, bool User
 			return;
 		}
 
-		for (size_t i = 0; i < channels.size(); i++) {
-			if (channels[i].find("#") != 0) {
+		for (size_t i = 0; i < channels.size(); i++) 
+		{
+			if (channels[i].find("#") != 0) 
+			{
 				std::cout << "Invalid channel format. Channels must start with '#'." << std::endl;
 				return;
 			}
@@ -349,13 +351,16 @@ void Server::_handleJoin(Client *cli, std::vector<std::string> params, bool User
 			const std::string& channelName = channelKeyPairs[i].first;
 			const std::string& channelKey = channelKeyPairs[i].second;
 
-			if (validateChannelPassword(cli, channelName, channelKey, UserChannel)) {
+			if (validateChannelPassword(cli, channelName, channelKey, UserChannel)) 
+			{
 				std::string joinMessage = ":" + cli->getNickName() + " JOIN " + channelName + "\r\n";
 				send(cli->getFd(), joinMessage.c_str(), joinMessage.size(), 0);
 				// Notificar a otros clientes en el canal
 				std::string notification = ":" + cli->getNickName() + " has joined " + channelName + "\r\n";
 				infoAllServerClients(notification);
 			}
+			else
+				return;
 		}
 	}
 }
@@ -382,10 +387,31 @@ void Server::_authenticatePassword(Client *cli, std::vector<std::string> params)
 	}
 }
 
-void	Server::_handleWhoIs(Client *cli, std::vector<std::string> params)
+void Server::_handleWhoIs(Client *cli, std::vector<std::string> params)
 {
-	(void) cli;
-	(void) params;
+    // Check if a nickname was provided
+    if (params.empty()) {
+        cli->addBuffer(ERR_NONICK432);  // Error: No nickname provided
+        return;
+    }
+
+    std::string targetNick = params[0];
+    Client* targetClient = getClientNickName(targetNick);
+
+    // Check if the client with the nickname exists
+    if (!targetClient) {
+        std::string error = "401 " + cli->getNickName() + " " + targetNick + " :No such nick/channel\r\n";
+        cli->addBuffer(error);
+        return;
+    }
+
+    // Send WHOIS details to the requesting client
+    std::string whoisInfo = RES_WHOIS311;
+    cli->addBuffer(whoisInfo);
+
+    // Final message indicating the end of WHOIS information
+    std::string endWhois = END_WHOIS318;
+    cli->addBuffer(endWhois);
 }
 
 void	Server::_handleQuit(Client *cli, std::vector<std::string> params)
@@ -403,7 +429,9 @@ bool Server::validateChannelPassword(Client *cli, const std::string& channelName
                 std::cout << "Password is valid for channel: " << channelName << std::endl;
                 _channels[i].addClient(cli);
                 return true;
-        	} else {
+        	} 
+			else 
+			{
             std::cout << "Invalid password for channel: " << channelName << std::endl;
             return false;
 			}
