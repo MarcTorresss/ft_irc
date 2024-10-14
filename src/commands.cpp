@@ -248,15 +248,27 @@ void	Server::_handleMode(Client *cli, std::vector<std::string> params)
 		// for (size_t i = 0; i < params.size(); ++i) {
 		// 	std::cout << "Param " << i << ": " << params[i] << std::endl;
 		// }
-		std::string type = params[params.size() - 1];
-		if (params.empty()){
-			std::cout << "the current channel modes are [" << "]" <<std::endl; //print los channel modes
+		// if (params.size() == 0){
+		// 	std::cout << "the current channel modes are [" << "]" <<std::endl;
+		// }
+		// std::cout << "AA" << params[1] <<std::endl;
+		if (params.size() < 2){
+			std::cout <<ERR << "you need to specify channel and mode"<<std::endl;
+			getChannelsList();
+			return;
 		}
-		std::string modes[] = {"+i","t","k","o","l"};
+		Channel *chann = findChannel("#"+params[0]);
+		if (chann == NULL){
+			std::cout <<ERR << "channel not found"<<std::endl;
+			return;
+		}
+		std::string type = params[1];
+		std::string modes[] = {"+i","+t","+k","+o","+l"};
 		int i = 0;
+		if (type[0] != '+')
+			type = "+" + type;
+		std::cout << type << std::endl;
 		for (i = 0; i < 5; ++i){
-			// if (modes[i] == params[params.size() - 1])
-			// 	break;
 			if (modes[i] == type)
 				break;
 		}
@@ -264,22 +276,31 @@ void	Server::_handleMode(Client *cli, std::vector<std::string> params)
 			switch (i) //DONE
 			{
 				case 0: //MODE #canal +i
-					getChannelsList();
-					_channels[0].setInviteOnly(cli);
+					chann->setInviteOnly(cli);
 					break;
 				case 1: //MODE #channel +t
-					// _channels[0].setTopicAdmin(cli);
+					chann->setTopicAdmin(cli);
 					break;
 				case 2: //MODE #canal +k password
-					// _channels[0].setPassword(cli,params[0]);
+					if (params.size() >= 3)
+						chann->setPassword(cli,params[2]);
+					else
+						cli->addBuffer("No password provided!\r\n");
 					break;
 				case 3: //MODE #canal +o <nickname>
-					// _channels[0].addAdmin(cli,params[0]);
+					if (params.size() >= 3)
+						chann->addAdmin(cli,params[2]);
+					else
+						cli->addBuffer("No nickname provided!\r\n");
 					break;
 				case 4: //MODE #canal +l 50
-					// _channels[0].setUserLimit(cli,params[0]);
+					if (params.size() >= 3)
+						chann->setUserLimit(cli,params[2]);
+					else
+						cli->addBuffer("No user limit provided!\r\n");
 					break;
 				default:
+					chann->showModes();
 					std::cout << ERR << "Channel MODE not existent [i, t, k, o, l]" <<std::endl;
 					break;
 			}
