@@ -218,7 +218,7 @@ void	Server::_handleTopic(Client *cli, std::vector<std::string> params)
         		cli->addBuffer(std::string(MSG_TOPIC332));
     		}
 		}
-		else if (!channel->istopiclock() && channel->isAdmin(cli) == 1)
+		else if (!channel->istopiclock() || (channel->isAdmin(cli) == 1 && channel->istopiclock()))
 		{
 			std::string newTopic = params[1];
 			channel->setTopic(cli, newTopic);
@@ -245,19 +245,14 @@ void	Server::_handleMode(Client *cli, std::vector<std::string> params)
 	}
 	else
 	{
-		// for (size_t i = 0; i < params.size(); ++i) {
-		// 	std::cout << "Param " << i << ": " << params[i] << std::endl;
-		// }
-		// if (params.size() == 0){
-		// 	std::cout << "the current channel modes are [" << "]" <<std::endl;
-		// }
-		// std::cout << "AA" << params[1] <<std::endl;
 		if (params.size() < 2){
 			std::cout <<ERR << "you need to specify channel and mode"<<std::endl;
 			getChannelsList();
 			return;
 		}
-		Channel *chann = findChannel("#"+params[0]);
+		if (params[0][0] != '#')
+			params[0] = "#" + params[0];
+		Channel *chann = findChannel(params[0]);
 		if (chann == NULL){
 			std::cout <<ERR << "channel not found"<<std::endl;
 			return;
@@ -267,8 +262,7 @@ void	Server::_handleMode(Client *cli, std::vector<std::string> params)
 		int i = 0;
 		if (type[0] != '+')
 			type = "+" + type;
-		std::cout << type << std::endl;
-		for (i = 0; i < 5; ++i){
+ 		for (i = 0; i < 5; ++i){
 			if (modes[i] == type)
 				break;
 		}
@@ -277,25 +271,41 @@ void	Server::_handleMode(Client *cli, std::vector<std::string> params)
 			{
 				case 0: //MODE #canal +i
 					chann->setInviteOnly(cli);
+					cli->addBuffer("Invited permissions changed!\r\n");
 					break;
 				case 1: //MODE #channel +t
 					chann->setTopicAdmin(cli);
+					cli->addBuffer("Topic status changed!\r\n");
 					break;
 				case 2: //MODE #canal +k password
 					if (params.size() >= 3)
+					{
 						chann->setPassword(cli,params[2]);
+						cli->addBuffer("Password Changed!\r\n");
+					}
 					else
 						cli->addBuffer("No password provided!\r\n");
 					break;
 				case 3: //MODE #canal +o <nickname>
 					if (params.size() >= 3)
-						chann->addAdmin(cli,params[2]);
+					{
+						if (getClientNickName(params[2]) != NULL)
+						{
+							chann->addAdmin(cli,getClientNickName(params[2]));
+							cli->addBuffer("Admin Added!\r\n");
+						}
+						else
+							cli->addBuffer("User not found!\r\n");
+					}
 					else
 						cli->addBuffer("No nickname provided!\r\n");
 					break;
 				case 4: //MODE #canal +l 50
 					if (params.size() >= 3)
+					{
 						chann->setUserLimit(cli,params[2]);
+						cli->addBuffer("User limit Changed!\r\n");
+					}
 					else
 						cli->addBuffer("No user limit provided!\r\n");
 					break;

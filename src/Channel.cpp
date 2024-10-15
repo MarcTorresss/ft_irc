@@ -2,6 +2,7 @@
 Channel::Channel()
 {
 	std::cout << "DEF CONSTRUCTOR" << std::endl;
+	_adminTopic = true;
 }
 Channel::Channel( Client *client,  std::string name, std::string pass) : _admins()
 {
@@ -10,6 +11,8 @@ Channel::Channel( Client *client,  std::string name, std::string pass) : _admins
 	_channelPassword = pass;
 	_admins.push_back(client->getNickName());
 	_clients.push_back(client->getNickName());
+	_adminTopic = true;
+
 }
 
 std::string Channel::getName() const
@@ -24,19 +27,23 @@ std::string Channel::getPass() const
 void	Channel::addClient( Client *client )
 {
 	if (_clients.size() >= _userLimit)
-		throw std::runtime_error("Channel is full!");
+	{
+		client->addBuffer("Channel is full!");
+		return ;
+	}
 	/*if (_inviteOnly && !isInvite(client))
 		throw std::runtime_error("");*/
 	_clients.push_back(client->getNickName());
 }
 
-void	Channel::addAdmin( Client *client, std::string target )
+void	Channel::addAdmin( Client *client, Client *newadmin )
 {
 	if (!isAdmin( client ))
-		throw std::runtime_error("Not admin");
-	// if (!isClient(target))
-	// 	throw std::runtime_error("That user is not connected to the channel");
-	_admins.push_back(target);
+	{
+		client->addBuffer("Not admin");
+		return ;
+	}
+	_admins.push_back(newadmin->getNickName());
 }
 
 void	Channel::setAdmin( std::string NickName )
@@ -52,7 +59,10 @@ int		Channel::someAdmin( void )
 void	Channel::removeAdmin( Client *client, std::string target )
 {
 	if (!isAdmin( client ))
-		throw std::runtime_error("Not admin");
+	{
+		client->addBuffer("Not admin");
+		return ;
+	}
 	unsigned long i = 0;
 	for (i = 0; i < _admins.size(); ++i){
 		if (_admins[i] == target)
@@ -66,11 +76,13 @@ bool Channel::removeClient(Client *client, std::string target)
 {
     if (!isAdmin(client))
 	{
-        throw std::runtime_error("Not admin");
+		client->addBuffer("Not admin");
+		return false;
 	}
     if (!isClient(client))
 	{
-        throw std::runtime_error("That user is not connected to the channel");
+		client->addBuffer("That user is not connected to the channel");
+		return false;
 	}
     unsigned long i = 0;
     for (i = 0; i < _clients.size(); ++i)
@@ -156,44 +168,73 @@ void	Channel::removeInvite( Client *client, std::string target)
 void	Channel::setTopic( Client *client, std::string topic )
 {
 	if (_adminTopic && !isAdmin( client ))
-		throw std::runtime_error("Not admin");
+	{
+		client->addBuffer("Not admin");
+		return ;
+	}
 	_channelTopic = topic;
 }
 
 void Channel::setTopicAdmin(Client *client){
 	if (!isAdmin( client ))
-		throw std::runtime_error("Not admin");
+	{
+		client->addBuffer("Not admin");
+		return ;
+	}
 	_adminTopic = !_adminTopic;
 }
 
 void Channel::setInviteOnly(Client *client){
 	if (!isAdmin( client ))
-		throw std::runtime_error("Not admin");
+	{
+		client->addBuffer("Not admin");
+		return ;
+	}
 	_inviteOnly = !_inviteOnly;
 }
 
 void	Channel::setPassword( Client *client, std::string pswd )
 {
 	if (!isAdmin( client ))
-		throw std::runtime_error("Not admin");
+	{
+		client->addBuffer("Not admin");
+		return ;
+	}
 	_channelPassword = pswd;
 }
 
 void	Channel::setUserLimit( Client *client, std::string limit )
 {
 	if (!isAdmin( client ))
-		throw std::runtime_error("Not admin");
+	{
+		client->addBuffer("Not admin");
+		return ;
+	}
 	if (limit.length() > 6)
-		throw std::out_of_range("User limit not allowed (max. 999999)");
+	{
+		client->addBuffer("User limit not allowed (max. 999999)");
+		return ;
+	}
 	for (int i = 0; limit[i] != 0; ++i){
 		if (!isdigit(limit[i]))
-			throw std::out_of_range("User limit must be a number (max. 999999)");
+		{
+			client->addBuffer("User limit must be a number (max. 999999)");
+			return ;
+		}
 	}
 	if (limit.length() == 0)
 		_userLimit = -1;
 	int lim = atoi(limit.c_str());
-	if (lim < 0)
-		throw std::out_of_range("User limit must be a positive int (max. 999999)");
+	if (lim <= 0)
+	{
+		client->addBuffer("User limit must be a positive int (max. 999999)");
+		return ;
+	}
+	if (_clients.size() > (size_t)lim)
+	{
+		client->addBuffer("User limit cant be smaller than user count");
+		return ;
+	}
 	_userLimit = lim;
 }
 

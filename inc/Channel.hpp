@@ -32,7 +32,7 @@ public:
 	bool	isAdmin( Client *client );
 	bool	isInvite( Client *client );
 
-	void	addAdmin( Client *client, std::string target );
+	void	addAdmin( Client *client, Client *newadmin );
 	void	addInvite( std::string target );
 	void	addClient( Client *client);
 	void	removeAdmin( Client *client, std::string target );
