@@ -35,7 +35,7 @@ void	Channel::addAdmin( Client *client, std::string target )
 	if (!isAdmin( client ))
 		throw std::runtime_error("Not admin");
 	// if (!isClient(target))
-		// throw std::runtime_error("That user is not connected to the channel");
+	// 	throw std::runtime_error("That user is not connected to the channel");
 	_admins.push_back(target);
 }
 
@@ -161,7 +161,6 @@ void	Channel::setTopic( Client *client, std::string topic )
 }
 
 void Channel::setTopicAdmin(Client *client){
-	(void) client;
 	if (!isAdmin( client ))
 		throw std::runtime_error("Not admin");
 	_adminTopic = !_adminTopic;
@@ -171,7 +170,6 @@ void Channel::setInviteOnly(Client *client){
 	if (!isAdmin( client ))
 		throw std::runtime_error("Not admin");
 	_inviteOnly = !_inviteOnly;
-	(void) client;
 }
 
 void	Channel::setPassword( Client *client, std::string pswd )
@@ -235,4 +233,18 @@ int Channel::getUserLimit() const {
 Channel::~Channel()
 {
 
+}
+
+void Channel::showModes(){
+	std::cout << "--CHANNEL MODES-> ";
+	std::cout << "i(invite)=" << _inviteOnly<<"/ ";
+	std::cout << "t(topic)=" << _adminTopic<<"/ ";
+	std::cout << "k(password)=" << _channelPassword<<"/ ";
+	std::cout << "l(user lim)=" << _userLimit<<"/ ";
+
+	std::cout << "o(admins)=" << _channelPassword;
+	std::vector< std::string >::iterator it;
+   	for (it = _admins.begin(); it != _admins.end(); it++)
+		std::cout << *it << "-";
+	std::cout <<std::endl;
 }

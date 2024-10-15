@@ -52,6 +52,7 @@ public:
 	int		someAdmin( void );
 	void	setAdmin( std::string NickName );
 	bool	istopiclock( void );
+	void	showModes();
 
 	const std::string& getPassword() const;
     bool isAdminTopicEnabled() const;
